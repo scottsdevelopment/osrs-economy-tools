@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import "./globals.scss";
+import "./globals.css";
 import Navbar from "@/components/Navbar";
+import { ItemDataProvider } from "@/context/ItemDataContext";
 
 export const metadata: Metadata = {
   title: "💰 OSRS Economy Tools - Flipping Finder & Alchemy Calculator",
@@ -56,10 +57,12 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <h1>💰 OSRS Economy Tools</h1>
-        <p>Useful tools to make profit in Old School RuneScape</p>
-        <Navbar />
-        {children}
+        <ItemDataProvider>
+          <Navbar />
+          <main className="p-8">
+            {children}
+          </main>
+        </ItemDataProvider>
         <footer>
           <p>
             Data provided by{" "}

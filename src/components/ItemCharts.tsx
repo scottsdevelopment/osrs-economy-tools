@@ -17,7 +17,6 @@ import { Line, Bar } from "react-chartjs-2";
 import "chartjs-adapter-date-fns";
 import { fetchTimeSeries } from "@/lib/api";
 import { TimeSeriesData } from "@/lib/types";
-import "./ItemCharts.scss";
 
 ChartJS.register(
     CategoryScale,
@@ -71,20 +70,22 @@ export default function ItemCharts({ itemId }: ItemChartsProps) {
             {
                 label: "Avg Sell Price",
                 data: data.map((d) => d.avgHighPrice),
-                borderColor: "#c02614",
-                backgroundColor: "rgba(192, 38, 20, 0.1)",
+                borderColor: "#936039",
+                backgroundColor: "rgba(147, 96, 57, 0.1)",
                 borderWidth: 2,
                 pointRadius: 0,
                 tension: 0.1,
+                spanGaps: true,
             },
             {
                 label: "Avg Buy Price",
                 data: data.map((d) => d.avgLowPrice),
-                borderColor: "#014cc0",
-                backgroundColor: "rgba(1, 76, 192, 0.1)",
+                borderColor: "#5a3820",
+                backgroundColor: "rgba(90, 56, 32, 0.1)",
                 borderWidth: 2,
                 pointRadius: 0,
                 tension: 0.1,
+                spanGaps: true,
             },
         ],
     };
@@ -95,12 +96,12 @@ export default function ItemCharts({ itemId }: ItemChartsProps) {
             {
                 label: "Sell Volume",
                 data: data.map((d) => d.highPriceVolume),
-                backgroundColor: "#c02614",
+                backgroundColor: "#936039",
             },
             {
                 label: "Buy Volume",
                 data: data.map((d) => d.lowPriceVolume),
-                backgroundColor: "#014cc0",
+                backgroundColor: "#5a3820",
             },
         ],
     };
@@ -138,12 +139,15 @@ export default function ItemCharts({ itemId }: ItemChartsProps) {
     };
 
     return (
-        <div className="charts-section">
-            <div className="chart-controls">
+        <div className="mt-8">
+            <div className="flex justify-center gap-2 mb-4">
                 {["1d", "7d", "30d", "1y"].map((range) => (
                     <button
                         key={range}
-                        className={`time-btn ${timeRange === range ? "active" : ""}`}
+                        className={`px-4 py-2 border border-osrs-border rounded cursor-pointer transition-colors ${timeRange === range
+                            ? "bg-osrs-accent text-white border-osrs-accent"
+                            : "bg-osrs-button text-black hover:bg-osrs-button-hover"
+                            }`}
                         onClick={() => setTimeRange(range)}
                     >
                         {range === "1d" ? "1 Day" : range === "7d" ? "7 Days" : range === "30d" ? "30 Days" : "1 Year"}
@@ -151,15 +155,13 @@ export default function ItemCharts({ itemId }: ItemChartsProps) {
                 ))}
             </div>
 
-            <div className="chart-container" style={{ height: "400px" }}>
-                <h3>Price History</h3>
-                <p className="chart-subtitle">Click and drag to zoom in. Double-click to zoom out.</p>
+            <h3 className="m-0 mb-2 text-osrs-accent text-center font-header font-bold text-xl">Price History</h3>
+            <div className="bg-osrs-input p-4 rounded-lg border border-osrs-border mb-8 h-[400px]">
                 <Line data={priceData} options={options} />
             </div>
 
-            <div className="chart-container" style={{ height: "400px" }}>
-                <h3>Volume History</h3>
-                <p className="chart-subtitle">Click and drag to zoom in. Double-click to zoom out.</p>
+            <h3 className="m-0 mb-2 text-osrs-accent text-center font-header font-bold text-xl">Volume History</h3>
+            <div className="bg-osrs-input p-4 rounded-lg border border-osrs-border mb-8 h-[400px]">
                 <Bar data={volumeData} options={options} />
             </div>
         </div>

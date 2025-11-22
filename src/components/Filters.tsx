@@ -1,247 +1,257 @@
+"use client";
+
+import React, { useState } from "react";
 import { FilterState } from "@/lib/types";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface FiltersProps {
     filters: FilterState;
     setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
-    onRefresh: () => void;
 }
 
-export default function Filters({ filters, setFilters, onRefresh }: FiltersProps) {
-    const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement>,
-        key: keyof FilterState,
-        type: "text" | "number" | "checkbox" = "text"
-    ) => {
-        let value: any;
-        if (type === "checkbox") {
-            value = e.target.checked;
-        } else if (type === "number") {
-            value = e.target.value === "" ? null : parseFloat(e.target.value);
-        } else {
-            value = e.target.value;
-        }
-        setFilters((prev) => ({ ...prev, [key]: value }));
+export default function Filters({ filters, setFilters }: FiltersProps) {
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value, type, checked } = e.target;
+        setFilters((prev) => ({
+            ...prev,
+            [name]: type === "checkbox" ? checked : value === "" ? null : Number(value),
+        }));
+    };
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFilters((prev) => ({ ...prev, searchQuery: e.target.value }));
     };
 
     return (
-        <div className="controls">
-            {/* Search & Options */}
-            <div className="filter-group full-width">
-                <div className="search-container">
-                    <input
-                        type="text"
-                        id="search-bar"
-                        placeholder="🔍 Search item..."
-                        value={filters.searchQuery}
-                        onChange={(e) => handleChange(e, "searchQuery")}
-                    />
-                    <button id="refresh-btn" onClick={onRefresh}>
-                        🔄 Refresh
-                    </button>
-                </div>
-                <div className="checkbox-container">
-                    <label className="checkbox-label">
-                        <input
-                            type="checkbox"
-                            id="f2p-filter"
-                            checked={filters.f2pOnly}
-                            onChange={(e) => handleChange(e, "f2pOnly", "checkbox")}
-                        />
-                        <span>F2P Only</span>
-                    </label>
-                    <label className="checkbox-label">
-                        <input
-                            type="checkbox"
-                            id="show-all"
-                            checked={filters.showAll}
-                            onChange={(e) => handleChange(e, "showAll", "checkbox")}
-                        />
-                        <span>Show Full List</span>
-                    </label>
-                </div>
-            </div>
+        <div className="mb-4 bg-osrs-panel border-2 border-osrs-border rounded-lg overflow-hidden shadow-lg">
+            {/* Header */}
+            <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="w-full px-4 py-3 bg-osrs-button text-[#2c1e12] font-header font-bold flex items-center justify-between hover:bg-osrs-button-hover transition-colors"
+            >
+                <span>Filters</span>
+                {isExpanded ? (
+                    <ChevronUp className="w-5 h-5" />
+                ) : (
+                    <ChevronDown className="w-5 h-5" />
+                )}
+            </button>
 
-            {/* Price Settings */}
-            <fieldset className="filter-group">
-                <legend>Price Settings</legend>
-                <div className="input-grid">
-                    <label>
-                        <span>Min Buy Price</span>
-                        <input
-                            type="number"
-                            min="0"
-                            placeholder="0"
-                            value={filters.minBuyPrice ?? ""}
-                            onChange={(e) => handleChange(e, "minBuyPrice", "number")}
-                        />
-                    </label>
-                    <label>
-                        <span>Max Buy Price</span>
-                        <input
-                            type="number"
-                            min="0"
-                            placeholder="∞"
-                            value={filters.maxBuyPrice ?? ""}
-                            onChange={(e) => handleChange(e, "maxBuyPrice", "number")}
-                        />
-                    </label>
-                    <label>
-                        <span>Min Sell Price</span>
-                        <input
-                            type="number"
-                            min="0"
-                            placeholder="0"
-                            value={filters.minSellPrice ?? ""}
-                            onChange={(e) => handleChange(e, "minSellPrice", "number")}
-                        />
-                    </label>
-                    <label>
-                        <span>Max Sell Price</span>
-                        <input
-                            type="number"
-                            min="0"
-                            placeholder="∞"
-                            value={filters.maxSellPrice ?? ""}
-                            onChange={(e) => handleChange(e, "maxSellPrice", "number")}
-                        />
-                    </label>
-                    <label className="checkbox-label">
-                        <input
-                            type="checkbox"
-                            id="buy-under-5m"
-                            checked={filters.buyUnder5m}
-                            onChange={(e) => handleChange(e, "buyUnder5m", "checkbox")}
-                        />
-                        <span>Buy &lt; 5m Avg</span>
-                    </label>
-                </div>
-            </fieldset>
+            {/* Content */}
+            {isExpanded && (
+                <div className="p-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Search & Options */}
+                        <fieldset className="border border-osrs-border rounded-lg p-4 bg-osrs-input lg:col-span-3 flex flex-wrap gap-4 justify-between items-center">
+                            <legend className="bg-osrs-accent text-white px-3 py-1 rounded text-sm font-bold">Search & Options</legend>
+                            <div className="flex flex-1 gap-2 min-w-[300px]">
+                                <input
+                                    type="text"
+                                    placeholder="Search items..."
+                                    value={filters.searchQuery}
+                                    onChange={handleSearchChange}
+                                    className="flex-1 p-2.5 border border-osrs-border rounded bg-white text-osrs-text focus:outline-none focus:border-osrs-primary focus:ring-2 focus:ring-osrs-primary/20 transition-all"
+                                />
+                            </div>
+                            <div className="flex flex-wrap gap-6 items-center">
+                                <label className="flex items-center gap-2 cursor-pointer text-sm select-none">
+                                    <input
+                                        type="checkbox"
+                                        name="f2pOnly"
+                                        checked={filters.f2pOnly}
+                                        onChange={handleInputChange}
+                                        className="w-5 h-5 accent-osrs-accent cursor-pointer"
+                                    />
+                                    F2P Only
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer text-sm select-none">
+                                    <input
+                                        type="checkbox"
+                                        name="showAll"
+                                        checked={filters.showAll}
+                                        onChange={handleInputChange}
+                                        className="w-5 h-5 accent-osrs-accent cursor-pointer"
+                                    />
+                                    Show All Items
+                                </label>
+                            </div>
+                        </fieldset>
 
-            {/* Profitability */}
-            <fieldset className="filter-group">
-                <legend>Profitability</legend>
-                <div className="input-grid">
-                    <label>
-                        <span>Min Profit</span>
-                        <input
-                            type="number"
-                            min="0"
-                            placeholder="0"
-                            value={filters.minProfit ?? ""}
-                            onChange={(e) => handleChange(e, "minProfit", "number")}
-                        />
-                    </label>
-                    <label>
-                        <span>Min ROI %</span>
-                        <input
-                            type="number"
-                            min="0"
-                            step="0.1"
-                            placeholder="0"
-                            value={filters.minRoi ?? ""}
-                            onChange={(e) => handleChange(e, "minRoi", "number")}
-                        />
-                    </label>
-                    <label>
-                        <span>Limit</span>
-                        <input
-                            type="number"
-                            min="0"
-                            placeholder="Any"
-                            value={filters.limitFilter ?? ""}
-                            onChange={(e) => handleChange(e, "limitFilter", "number")}
-                        />
-                    </label>
-                    <label>
-                        <span>Min Volume (24h)</span>
-                        <input
-                            type="number"
-                            min="0"
-                            placeholder="0"
-                            value={filters.minVolume ?? ""}
-                            onChange={(e) => handleChange(e, "minVolume", "number")}
-                        />
-                    </label>
-                </div>
-            </fieldset>
+                        {/* Price Settings */}
+                        <fieldset className="border border-osrs-border rounded-lg p-4 bg-osrs-input min-w-0">
+                            <legend className="bg-osrs-accent text-white px-3 py-1 rounded text-sm font-bold">Price Settings</legend>
+                            <div className="grid grid-cols-2 gap-4">
+                                <label className="flex flex-col gap-1 text-sm text-left">
+                                    Min Buy Price
+                                    <input
+                                        type="number"
+                                        name="minBuyPrice"
+                                        value={filters.minBuyPrice ?? ""}
+                                        onChange={handleInputChange}
+                                        className="w-full p-2 border border-osrs-border rounded bg-white focus:outline-none focus:border-osrs-accent focus:ring-2 focus:ring-osrs-accent/20"
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-1 text-sm text-left">
+                                    Max Buy Price
+                                    <input
+                                        type="number"
+                                        name="maxBuyPrice"
+                                        value={filters.maxBuyPrice ?? ""}
+                                        onChange={handleInputChange}
+                                        className="w-full p-2 border border-osrs-border rounded bg-white focus:outline-none focus:border-osrs-accent focus:ring-2 focus:ring-osrs-accent/20"
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-1 text-sm text-left">
+                                    Min Sell Price
+                                    <input
+                                        type="number"
+                                        name="minSellPrice"
+                                        value={filters.minSellPrice ?? ""}
+                                        onChange={handleInputChange}
+                                        className="w-full p-2 border border-osrs-border rounded bg-white focus:outline-none focus:border-osrs-accent focus:ring-2 focus:ring-osrs-accent/20"
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-1 text-sm text-left">
+                                    Max Sell Price
+                                    <input
+                                        type="number"
+                                        name="maxSellPrice"
+                                        value={filters.maxSellPrice ?? ""}
+                                        onChange={handleInputChange}
+                                        className="w-full p-2 border border-osrs-border rounded bg-white focus:outline-none focus:border-osrs-accent focus:ring-2 focus:ring-osrs-accent/20"
+                                    />
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer text-sm select-none col-span-2 mt-2">
+                                    <input
+                                        type="checkbox"
+                                        name="buyUnder5m"
+                                        checked={filters.buyUnder5m}
+                                        onChange={handleInputChange}
+                                        className="w-5 h-5 accent-osrs-accent cursor-pointer"
+                                    />
+                                    Buy &lt; 5m Avg
+                                </label>
+                            </div>
+                        </fieldset>
 
-            {/* Short-Term (5m) */}
-            <fieldset className="filter-group">
-                <legend>Short-Term (5m)</legend>
-                <div className="input-grid">
-                    <label>
-                        <span>Min 5m Vol</span>
-                        <input
-                            type="number"
-                            min="0"
-                            placeholder="50"
-                            value={filters.min5mVol ?? ""}
-                            onChange={(e) => handleChange(e, "min5mVol", "number")}
-                        />
-                    </label>
-                    <label>
-                        <span>Min Buy Pressure %</span>
-                        <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            placeholder="0"
-                            value={filters.minBuyPressure5m ?? ""}
-                            onChange={(e) => handleChange(e, "minBuyPressure5m", "number")}
-                        />
-                    </label>
-                    <label>
-                        <span>Min Sell Pressure %</span>
-                        <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            placeholder="0"
-                            value={filters.minSellPressure5m ?? ""}
-                            onChange={(e) => handleChange(e, "minSellPressure5m", "number")}
-                        />
-                    </label>
-                </div>
-            </fieldset>
+                        {/* Profit & Volume */}
+                        <fieldset className="border border-osrs-border rounded-lg p-4 bg-osrs-input min-w-0">
+                            <legend className="bg-osrs-accent text-white px-3 py-1 rounded text-sm font-bold">Profit & Volume</legend>
+                            <div className="grid grid-cols-2 gap-4">
+                                <label className="flex flex-col gap-1 text-sm text-left">
+                                    Min Profit
+                                    <input
+                                        type="number"
+                                        name="minProfit"
+                                        value={filters.minProfit ?? ""}
+                                        onChange={handleInputChange}
+                                        className="w-full p-2 border border-osrs-border rounded bg-white focus:outline-none focus:border-osrs-accent focus:ring-2 focus:ring-osrs-accent/20"
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-1 text-sm text-left">
+                                    Min ROI %
+                                    <input
+                                        type="number"
+                                        name="minRoi"
+                                        value={filters.minRoi ?? ""}
+                                        onChange={handleInputChange}
+                                        className="w-full p-2 border border-osrs-border rounded bg-white focus:outline-none focus:border-osrs-accent focus:ring-2 focus:ring-osrs-accent/20"
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-1 text-sm text-left">
+                                    Min Daily Vol
+                                    <input
+                                        type="number"
+                                        name="minVolume"
+                                        value={filters.minVolume ?? ""}
+                                        onChange={handleInputChange}
+                                        className="w-full p-2 border border-osrs-border rounded bg-white focus:outline-none focus:border-osrs-accent focus:ring-2 focus:ring-osrs-accent/20"
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-1 text-sm text-left">
+                                    Min Limit
+                                    <input
+                                        type="number"
+                                        name="limitFilter"
+                                        value={filters.limitFilter ?? ""}
+                                        onChange={handleInputChange}
+                                        className="w-full p-2 border border-osrs-border rounded bg-white focus:outline-none focus:border-osrs-accent focus:ring-2 focus:ring-osrs-accent/20"
+                                    />
+                                </label>
+                            </div>
+                        </fieldset>
 
-            {/* Long-Term (1h) */}
-            <fieldset className="filter-group">
-                <legend>Long-Term (1h)</legend>
-                <div className="input-grid">
-                    <label>
-                        <span>Min 1h Vol</span>
-                        <input
-                            type="number"
-                            min="0"
-                            placeholder="0"
-                            value={filters.min1hVol ?? ""}
-                            onChange={(e) => handleChange(e, "min1hVol", "number")}
-                        />
-                    </label>
-                    <label>
-                        <span>Min Buy Pressure %</span>
-                        <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            placeholder="0"
-                            value={filters.minBuyPressure1h ?? ""}
-                            onChange={(e) => handleChange(e, "minBuyPressure1h", "number")}
-                        />
-                    </label>
-                    <label>
-                        <span>Min Sell Pressure %</span>
-                        <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            placeholder="0"
-                            value={filters.minSellPressure1h ?? ""}
-                            onChange={(e) => handleChange(e, "minSellPressure1h", "number")}
-                        />
-                    </label>
+                        {/* Pressure Filters */}
+                        <fieldset className="border border-osrs-border rounded-lg p-4 bg-osrs-input min-w-0">
+                            <legend className="bg-osrs-accent text-white px-3 py-1 rounded text-sm font-bold">Pressure Filters</legend>
+                            <div className="grid grid-cols-2 gap-4">
+                                <label className="flex flex-col gap-1 text-sm text-left">
+                                    Min 5m Vol
+                                    <input
+                                        type="number"
+                                        name="min5mVol"
+                                        value={filters.min5mVol ?? ""}
+                                        onChange={handleInputChange}
+                                        className="w-full p-2 border border-osrs-border rounded bg-white focus:outline-none focus:border-osrs-accent focus:ring-2 focus:ring-osrs-accent/20"
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-1 text-sm text-left">
+                                    Min 1h Vol
+                                    <input
+                                        type="number"
+                                        name="min1hVol"
+                                        value={filters.min1hVol ?? ""}
+                                        onChange={handleInputChange}
+                                        className="w-full p-2 border border-osrs-border rounded bg-white focus:outline-none focus:border-osrs-accent focus:ring-2 focus:ring-osrs-accent/20"
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-1 text-sm text-left">
+                                    Min Buy Pres (5m)
+                                    <input
+                                        type="number"
+                                        name="minBuyPressure5m"
+                                        value={filters.minBuyPressure5m ?? ""}
+                                        onChange={handleInputChange}
+                                        className="w-full p-2 border border-osrs-border rounded bg-white focus:outline-none focus:border-osrs-accent focus:ring-2 focus:ring-osrs-accent/20"
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-1 text-sm text-left">
+                                    Min Sell Pres (5m)
+                                    <input
+                                        type="number"
+                                        name="minSellPressure5m"
+                                        value={filters.minSellPressure5m ?? ""}
+                                        onChange={handleInputChange}
+                                        className="w-full p-2 border border-osrs-border rounded bg-white focus:outline-none focus:border-osrs-accent focus:ring-2 focus:ring-osrs-accent/20"
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-1 text-sm text-left">
+                                    Min Buy Pres (1h)
+                                    <input
+                                        type="number"
+                                        name="minBuyPressure1h"
+                                        value={filters.minBuyPressure1h ?? ""}
+                                        onChange={handleInputChange}
+                                        className="w-full p-2 border border-osrs-border rounded bg-white focus:outline-none focus:border-osrs-accent focus:ring-2 focus:ring-osrs-accent/20"
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-1 text-sm text-left">
+                                    Min Sell Pres (1h)
+                                    <input
+                                        type="number"
+                                        name="minSellPressure1h"
+                                        value={filters.minSellPressure1h ?? ""}
+                                        onChange={handleInputChange}
+                                        className="w-full p-2 border border-osrs-border rounded bg-white focus:outline-none focus:border-osrs-accent focus:ring-2 focus:ring-osrs-accent/20"
+                                    />
+                                </label>
+                            </div>
+                        </fieldset>
+                    </div>
                 </div>
-            </fieldset>
+            )}
         </div>
     );
 }

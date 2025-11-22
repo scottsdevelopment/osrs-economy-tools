@@ -5,7 +5,6 @@ import React, { useState, useMemo } from "react";
 import { ProcessedItem } from "@/lib/types";
 import { getItemImageUrl } from "@/lib/api";
 import { ArrowUp, ArrowDown } from "lucide-react";
-import "./DecantingCalculator.scss";
 
 interface DecantingCalculatorProps {
     items: ProcessedItem[];
@@ -13,6 +12,7 @@ interface DecantingCalculatorProps {
 
 interface DecantResult {
     name: string;
+    id: number;
     volume1: number | null;
     volume2: number | null;
     volume3: number | null;
@@ -111,6 +111,7 @@ export default function DecantingCalculator({ items }: DecantingCalculatorProps)
 
             results.push({
                 name: baseName,
+                id: dose4.id,
                 volume1: doses[1]?.volume || null,
                 volume2: doses[2]?.volume || null,
                 volume3: doses[3]?.volume || null,
@@ -186,18 +187,18 @@ export default function DecantingCalculator({ items }: DecantingCalculatorProps)
     const formatProfit = (val: number | null) => {
         if (val === null) return "-";
         return (
-            <span className={val >= 0 ? "value-positive" : "value-negative"}>
+            <span className={val >= 0 ? "text-[#014cc0]" : "text-[#c02614]"}>
                 {val.toLocaleString()}
             </span>
         );
     };
 
     return (
-        <div id="decanting-tab" className="tab-content active" style={{ display: "block" }}>
+        <div id="decanting-tab" className="block w-full">
             <h2>Hot Item Decanting Calculator</h2>
-            <div className="controls">
-                <div className="filter-row">
-                    <label>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6 max-w-[1200px] mx-auto px-4 my-4">
+                <div className="flex justify-center items-center gap-4 flex-wrap">
+                    <label className="flex flex-col gap-1 text-sm text-left">
                         Min Volume:
                         <input
                             type="number"
@@ -205,158 +206,168 @@ export default function DecantingCalculator({ items }: DecantingCalculatorProps)
                             min="0"
                             value={minVolume ?? ""}
                             onChange={(e) => setMinVolume(e.target.value ? parseInt(e.target.value) : null)}
+                            className="p-2 border border-osrs-border rounded bg-osrs-input focus:outline-none focus:border-osrs-accent focus:ring-2 focus:ring-osrs-accent/20"
                         />
                     </label>
-                    <label>
+                    <label className="flex flex-col gap-1 text-sm text-left">
                         <input
                             type="text"
                             id="decant-search-bar"
                             placeholder="🔍 Search potion..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
+                            className="p-2 border border-osrs-border rounded bg-osrs-input focus:outline-none focus:border-osrs-accent focus:ring-2 focus:ring-osrs-accent/20 min-w-[300px]"
                         />
                     </label>
                 </div>
             </div>
 
-            <table id="decant-table">
-                <thead>
-                    <tr>
-                        <th rowSpan={2} onClick={() => handleSort("name")} data-tooltip="Name of the potion">
-                            Potion <SortIcon column="name" />
-                        </th>
-                        <th colSpan={4} style={{ textAlign: "center" }} data-tooltip="Volume traded in the last 24 hours">
-                            Volume
-                        </th>
-                        <th colSpan={4} style={{ textAlign: "center" }} data-tooltip="Current buy price for each dose">
-                            Price
-                        </th>
-                        <th colSpan={4} style={{ textAlign: "center" }} data-tooltip="Cost per single dose based on current price">
-                            Cost/Charge
-                        </th>
-                        <th
-                            rowSpan={2}
-                            onClick={() => handleSort("profit1to4")}
-                            data-tooltip="Profit from decanting (1) dose potions into (4) dose"
-                        >
-                            Profit (1→4) <SortIcon column="profit1to4" />
-                        </th>
-                        <th
-                            rowSpan={2}
-                            onClick={() => handleSort("profit2to4")}
-                            data-tooltip="Profit from decanting (2) dose potions into (4) dose"
-                        >
-                            Profit (2→4) <SortIcon column="profit2to4" />
-                        </th>
-                        <th
-                            rowSpan={2}
-                            onClick={() => handleSort("profit3to4")}
-                            data-tooltip="Profit from decanting (3) dose potions into (4) dose"
-                        >
-                            Profit (3→4) <SortIcon column="profit3to4" />
-                        </th>
-                        <th
-                            rowSpan={2}
-                            onClick={() => handleSort("profitPerDecant1")}
-                            data-tooltip="Profit per single decant operation (1→4)"
-                        >
-                            Profit/Decant (1→4) <SortIcon column="profitPerDecant1" />
-                        </th>
-                        <th
-                            rowSpan={2}
-                            onClick={() => handleSort("profitPerDecant2")}
-                            data-tooltip="Profit per single decant operation (2→4)"
-                        >
-                            Profit/Decant (2→4) <SortIcon column="profitPerDecant2" />
-                        </th>
-                        <th
-                            rowSpan={2}
-                            onClick={() => handleSort("profitPerDecant3")}
-                            data-tooltip="Profit per single decant operation (3→4)"
-                        >
-                            Profit/Decant (3→4) <SortIcon column="profitPerDecant3" />
-                        </th>
-                    </tr>
-                    <tr>
-                        <th onClick={() => handleSort("volume1")} data-tooltip="24h Volume for (1) dose">
-                            (1) <SortIcon column="volume1" />
-                        </th>
-                        <th onClick={() => handleSort("volume2")} data-tooltip="24h Volume for (2) dose">
-                            (2) <SortIcon column="volume2" />
-                        </th>
-                        <th onClick={() => handleSort("volume3")} data-tooltip="24h Volume for (3) dose">
-                            (3) <SortIcon column="volume3" />
-                        </th>
-                        <th onClick={() => handleSort("volume4")} data-tooltip="24h Volume for (4) dose">
-                            (4) <SortIcon column="volume4" />
-                        </th>
-                        <th onClick={() => handleSort("price1")} data-tooltip="Buy price for (1) dose">
-                            (1) <SortIcon column="price1" />
-                        </th>
-                        <th onClick={() => handleSort("price2")} data-tooltip="Buy price for (2) dose">
-                            (2) <SortIcon column="price2" />
-                        </th>
-                        <th onClick={() => handleSort("price3")} data-tooltip="Buy price for (3) dose">
-                            (3) <SortIcon column="price3" />
-                        </th>
-                        <th onClick={() => handleSort("price4")} data-tooltip="Buy price for (4) dose">
-                            (4) <SortIcon column="price4" />
-                        </th>
-                        <th onClick={() => handleSort("costPerCharge1")} data-tooltip="Cost per dose for (1) dose potion">
-                            (1) <SortIcon column="costPerCharge1" />
-                        </th>
-                        <th onClick={() => handleSort("costPerCharge2")} data-tooltip="Cost per dose for (2) dose potion">
-                            (2) <SortIcon column="costPerCharge2" />
-                        </th>
-                        <th onClick={() => handleSort("costPerCharge3")} data-tooltip="Cost per dose for (3) dose potion">
-                            (3) <SortIcon column="costPerCharge3" />
-                        </th>
-                        <th onClick={() => handleSort("costPerCharge4")} data-tooltip="Cost per dose for (4) dose potion">
-                            (4) <SortIcon column="costPerCharge4" />
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {sortedData.map((potion) => (
-                        <tr key={potion.name}>
-                            <td>
-                                <img
-                                    className="item-icon"
-                                    src={getItemImageUrl(potion.name + " (4)")}
-                                    alt={potion.name}
-                                    onError={(e) => {
-                                        (e.target as HTMLImageElement).style.display = "none";
-                                    }}
-                                />
-                                {potion.name}
-                            </td>
-                            <td>{formatValue(potion.volume1)}</td>
-                            <td>{formatValue(potion.volume2)}</td>
-                            <td>{formatValue(potion.volume3)}</td>
-                            <td>{formatValue(potion.volume4)}</td>
-                            <td>{formatValue(potion.price1)}</td>
-                            <td>{formatValue(potion.price2)}</td>
-                            <td>{formatValue(potion.price3)}</td>
-                            <td>{formatValue(potion.price4)}</td>
-                            <td>{formatValue(potion.costPerCharge1)}</td>
-                            <td>{formatValue(potion.costPerCharge2)}</td>
-                            <td>{formatValue(potion.costPerCharge3)}</td>
-                            <td>{formatValue(potion.costPerCharge4)}</td>
-                            <td>{formatProfit(potion.profit1to4)}</td>
-                            <td>{formatProfit(potion.profit2to4)}</td>
-                            <td>{formatProfit(potion.profit3to4)}</td>
-                            <td>{formatProfit(potion.profitPerDecant1)}</td>
-                            <td>{formatProfit(potion.profitPerDecant2)}</td>
-                            <td>{formatProfit(potion.profitPerDecant3)}</td>
-                        </tr>
-                    ))}
-                    {sortedData.length === 0 && (
+            <div className="overflow-x-auto">
+                <table id="decant-table" className="w-full max-w-[1800px] mx-auto text-[0.95em] border-separate border-spacing-0 bg-osrs-panel shadow-lg rounded-lg overflow-hidden border border-osrs-border">
+                    <thead>
                         <tr>
-                            <td colSpan={19}>No potions match the current filters.</td>
+                            <th rowSpan={2} onClick={() => handleSort("name")} data-tooltip="Name of the potion" className="p-3 text-left bg-osrs-button text-[#2c1e12] font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative">
+                                Potion <SortIcon column="name" />
+                            </th>
+                            <th colSpan={4} style={{ textAlign: "center" }} data-tooltip="Volume traded in the last 24 hours" className="p-3 text-center bg-osrs-button text-[#2c1e12] font-header font-bold border-b-2 border-osrs-border">
+                                Volume
+                            </th>
+                            <th colSpan={4} style={{ textAlign: "center" }} data-tooltip="Current buy price for each dose" className="p-3 text-center bg-osrs-button text-[#2c1e12] font-header font-bold border-b-2 border-osrs-border">
+                                Price
+                            </th>
+                            <th colSpan={4} style={{ textAlign: "center" }} data-tooltip="Cost per single dose based on current price" className="p-3 text-center bg-osrs-button text-[#2c1e12] font-header font-bold border-b-2 border-osrs-border">
+                                Cost/Charge
+                            </th>
+                            <th
+                                rowSpan={2}
+                                onClick={() => handleSort("profit1to4")}
+                                data-tooltip="Profit from decanting (1) dose potions into (4) dose"
+                                className="p-3 text-left bg-osrs-button text-[#2c1e12] font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative"
+                            >
+                                Profit (1→4) <SortIcon column="profit1to4" />
+                            </th>
+                            <th
+                                rowSpan={2}
+                                onClick={() => handleSort("profit2to4")}
+                                data-tooltip="Profit from decanting (2) dose potions into (4) dose"
+                                className="p-3 text-left bg-osrs-button text-[#2c1e12] font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative"
+                            >
+                                Profit (2→4) <SortIcon column="profit2to4" />
+                            </th>
+                            <th
+                                rowSpan={2}
+                                onClick={() => handleSort("profit3to4")}
+                                data-tooltip="Profit from decanting (3) dose potions into (4) dose"
+                                className="p-3 text-left bg-osrs-button text-[#2c1e12] font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative"
+                            >
+                                Profit (3→4) <SortIcon column="profit3to4" />
+                            </th>
+                            <th
+                                rowSpan={2}
+                                onClick={() => handleSort("profitPerDecant1")}
+                                data-tooltip="Profit per single decant operation (1→4)"
+                                className="p-3 text-left bg-osrs-button text-[#2c1e12] font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative"
+                            >
+                                Profit/Decant (1→4) <SortIcon column="profitPerDecant1" />
+                            </th>
+                            <th
+                                rowSpan={2}
+                                onClick={() => handleSort("profitPerDecant2")}
+                                data-tooltip="Profit per single decant operation (2→4)"
+                                className="p-3 text-left bg-osrs-button text-[#2c1e12] font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative"
+                            >
+                                Profit/Decant (2→4) <SortIcon column="profitPerDecant2" />
+                            </th>
+                            <th
+                                rowSpan={2}
+                                onClick={() => handleSort("profitPerDecant3")}
+                                data-tooltip="Profit per single decant operation (3→4)"
+                                className="p-3 text-left bg-osrs-button text-[#2c1e12] font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative"
+                            >
+                                Profit/Decant (3→4) <SortIcon column="profitPerDecant3" />
+                            </th>
                         </tr>
-                    )}
-                </tbody>
-            </table>
+                        <tr>
+                            <th onClick={() => handleSort("volume1")} data-tooltip="24h Volume for (1) dose" className="p-3 text-left bg-osrs-button text-[#2c1e12] font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative">
+                                (1) <SortIcon column="volume1" />
+                            </th>
+                            <th onClick={() => handleSort("volume2")} data-tooltip="24h Volume for (2) dose" className="p-3 text-left bg-osrs-button text-[#2c1e12] font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative">
+                                (2) <SortIcon column="volume2" />
+                            </th>
+                            <th onClick={() => handleSort("volume3")} data-tooltip="24h Volume for (3) dose" className="p-3 text-left bg-osrs-button text-[#2c1e12] font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative">
+                                (3) <SortIcon column="volume3" />
+                            </th>
+                            <th onClick={() => handleSort("volume4")} data-tooltip="24h Volume for (4) dose" className="p-3 text-left bg-osrs-button text-[#2c1e12] font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative">
+                                (4) <SortIcon column="volume4" />
+                            </th>
+                            <th onClick={() => handleSort("price1")} data-tooltip="Buy price for (1) dose" className="p-3 text-left bg-osrs-button text-[#2c1e12] font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative">
+                                (1) <SortIcon column="price1" />
+                            </th>
+                            <th onClick={() => handleSort("price2")} data-tooltip="Buy price for (2) dose" className="p-3 text-left bg-osrs-button text-[#2c1e12] font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative">
+                                (2) <SortIcon column="price2" />
+                            </th>
+                            <th onClick={() => handleSort("price3")} data-tooltip="Buy price for (3) dose" className="p-3 text-left bg-osrs-button text-[#2c1e12] font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative">
+                                (3) <SortIcon column="price3" />
+                            </th>
+                            <th onClick={() => handleSort("price4")} data-tooltip="Buy price for (4) dose" className="p-3 text-left bg-osrs-button text-[#2c1e12] font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative">
+                                (4) <SortIcon column="price4" />
+                            </th>
+                            <th onClick={() => handleSort("costPerCharge1")} data-tooltip="Cost per dose for (1) dose potion" className="p-3 text-left bg-osrs-button text-[#2c1e12] font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative">
+                                (1) <SortIcon column="costPerCharge1" />
+                            </th>
+                            <th onClick={() => handleSort("costPerCharge2")} data-tooltip="Cost per dose for (2) dose potion" className="p-3 text-left bg-osrs-button text-[#2c1e12] font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative">
+                                (2) <SortIcon column="costPerCharge2" />
+                            </th>
+                            <th onClick={() => handleSort("costPerCharge3")} data-tooltip="Cost per dose for (3) dose potion" className="p-3 text-left bg-osrs-button text-[#2c1e12] font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative">
+                                (3) <SortIcon column="costPerCharge3" />
+                            </th>
+                            <th onClick={() => handleSort("costPerCharge4")} data-tooltip="Cost per dose for (4) dose potion" className="p-3 text-left bg-osrs-button text-[#2c1e12] font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative">
+                                (4) <SortIcon column="costPerCharge4" />
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {sortedData.map((potion) => (
+                            <tr key={potion.name} className="even:bg-[#dfd5c1] hover:bg-[#f0e6d2] transition-colors">
+                                <td className="p-3 border-b border-[#c9bca0]">
+                                    <img
+                                        className="w-6 h-6 inline-block align-middle mr-2"
+                                        src={getItemImageUrl(potion.name)}
+                                        alt={potion.name}
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).style.display = "none";
+                                        }}
+                                    />
+                                    {potion.name}
+                                </td>
+                                <td className="p-3 border-b border-[#c9bca0]">{formatValue(potion.volume1)}</td>
+                                <td className="p-3 border-b border-[#c9bca0]">{formatValue(potion.volume2)}</td>
+                                <td className="p-3 border-b border-[#c9bca0]">{formatValue(potion.volume3)}</td>
+                                <td className="p-3 border-b border-[#c9bca0]">{formatValue(potion.volume4)}</td>
+                                <td className="p-3 border-b border-[#c9bca0]">{formatValue(potion.price1)}</td>
+                                <td className="p-3 border-b border-[#c9bca0]">{formatValue(potion.price2)}</td>
+                                <td className="p-3 border-b border-[#c9bca0]">{formatValue(potion.price3)}</td>
+                                <td className="p-3 border-b border-[#c9bca0]">{formatValue(potion.price4)}</td>
+                                <td className="p-3 border-b border-[#c9bca0]">{formatValue(potion.costPerCharge1)}</td>
+                                <td className="p-3 border-b border-[#c9bca0]">{formatValue(potion.costPerCharge2)}</td>
+                                <td className="p-3 border-b border-[#c9bca0]">{formatValue(potion.costPerCharge3)}</td>
+                                <td className="p-3 border-b border-[#c9bca0]">{formatValue(potion.costPerCharge4)}</td>
+                                <td className="p-3 border-b border-[#c9bca0]">{formatProfit(potion.profit1to4)}</td>
+                                <td className="p-3 border-b border-[#c9bca0]">{formatProfit(potion.profit2to4)}</td>
+                                <td className="p-3 border-b border-[#c9bca0]">{formatProfit(potion.profit3to4)}</td>
+                                <td className="p-3 border-b border-[#c9bca0]">{formatProfit(potion.profitPerDecant1)}</td>
+                                <td className="p-3 border-b border-[#c9bca0]">{formatProfit(potion.profitPerDecant2)}</td>
+                                <td className="p-3 border-b border-[#c9bca0]">{formatProfit(potion.profitPerDecant3)}</td>
+                            </tr>
+                        ))}
+                        {sortedData.length === 0 && (
+                            <tr>
+                                <td colSpan={19} className="p-4 text-center text-osrs-text">No potions match the current filters.</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }

@@ -1,9 +1,8 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { ProcessedItem } from "@/lib/types";
-import "./AlchemyCalculator.scss";
+import ItemSearch from "@/components/ItemSearch";
 
 interface AlchemyCalculatorProps {
     items: ProcessedItem[];
@@ -35,55 +34,15 @@ export default function AlchemyCalculator({ items }: AlchemyCalculatorProps) {
     // Auto-update price when alch value changes
     useEffect(() => {
         if (alchValue > 500) {
-            // Logic from script.js: itemPriceInput.value = alchValue - 500;
-            // But we only want to do this if the user is manually changing alch value?
-            // script.js did it on 'input' event.
-            // We'll leave it manual or triggered by lookup for now to avoid overwriting user input too aggressively.
-            // Actually script.js: alchValueInput.addEventListener("input", handleAlchValueChange);
-            // handleAlchValueChange calls updatePriceFromAlch which sets itemPrice = alchValue - 500.
-            // So yes, we should update it.
             setItemPrice(alchValue - 500);
         }
     }, [alchValue]);
 
-    const handleLookup = () => {
-        const query = itemName.trim().toLowerCase();
-        if (!query) {
-            alert("Please enter an item name");
-            return;
-        }
-
-        const foundItem = items.find((i) => i.name.toLowerCase() === query);
-        if (foundItem) {
-            if (foundItem.alchValue !== null) {
-                setAlchValue(foundItem.alchValue);
-                // useEffect will update price
-                alert(
-                    `Found item: ${foundItem.name} \nAlch value: ${foundItem.alchValue.toLocaleString()} GP\nPrice set to: ${(foundItem.alchValue - 500).toLocaleString()} GP`
-                );
-            } else {
-                setItemPrice(foundItem.low);
-                alert(
-                    `Found item: ${foundItem.name} \nCurrent buy price: ${foundItem.low.toLocaleString()} GP\nNo alch value available. Please enter the alch value manually.`
-                );
-            }
-        } else {
-            const partialMatch = items.find((i) => i.name.toLowerCase().includes(query));
-            if (partialMatch) {
-                const use = confirm(
-                    `Did you mean "${partialMatch.name}" ?\nCurrent buy price: ${partialMatch.low.toLocaleString()} GP`
-                );
-                if (use) {
-                    setItemName(partialMatch.name);
-                    if (partialMatch.alchValue !== null) {
-                        setAlchValue(partialMatch.alchValue);
-                    } else {
-                        setItemPrice(partialMatch.low);
-                    }
-                }
-            } else {
-                alert("Item not found in price data. Please check spelling or enter values manually.");
-            }
+    const handleItemSelect = (item: ProcessedItem) => {
+        setItemName(item.name);
+        setItemPrice(item.low);
+        if (item.alchValue !== null) {
+            setAlchValue(item.alchValue);
         }
     };
 
@@ -138,63 +97,64 @@ export default function AlchemyCalculator({ items }: AlchemyCalculatorProps) {
     };
 
     return (
-        <div id="alchemy-tab" className="tab-content active" style={{ display: "block" }}>
+        <div id="alchemy-tab" className="block">
             <h2>Alchemy Trade Calculator</h2>
-            <div className="calculator-container">
-                <div className="calculator-inputs">
-                    <h3>Trade Details</h3>
-                    <label>
+            <div className="max-w-[900px] mx-auto my-8 p-4 bg-[#d8ccb4] rounded-lg shadow-[0_0_8px_rgba(0,0,0,0.3)]">
+                <div className="flex flex-col gap-4 mb-8 p-4 bg-osrs-panel rounded">
+                    <h3 className="text-osrs-accent mb-4">Trade Details</h3>
+                    <label className="flex flex-col gap-2 text-base">
                         Starting Capital (GP):
                         <input
                             type="number"
                             value={startingCapital}
                             onChange={(e) => setStartingCapital(parseFloat(e.target.value) || 0)}
                             min="0"
+                            className="p-2.5 bg-osrs-input border border-osrs-border rounded text-black text-base focus:outline-none focus:border-osrs-accent"
                         />
                     </label>
-                    <label>
+                    <label className="flex flex-row items-center gap-2 cursor-pointer text-base">
                         <input
                             type="checkbox"
                             checked={autoUpdateCapital}
                             onChange={(e) => setAutoUpdateCapital(e.target.checked)}
+                            className="w-5 h-5 cursor-pointer accent-osrs-accent"
                         />
                         Auto-update starting capital after calculation
                     </label>
-                    <label>
+                    <label className="flex flex-col gap-2 text-base">
                         Item Price (GP):
                         <input
                             type="number"
                             value={itemPrice}
                             onChange={(e) => setItemPrice(parseFloat(e.target.value) || 0)}
                             min="0"
+                            className="p-2.5 bg-osrs-input border border-osrs-border rounded text-black text-base focus:outline-none focus:border-osrs-accent"
                         />
                     </label>
-                    <label>
-                        Item Name (for lookup):
-                        <div style={{ display: "flex", gap: "0.5em" }}>
-                            <input
-                                type="text"
-                                value={itemName}
-                                onChange={(e) => setItemName(e.target.value)}
-                                placeholder="e.g., Rune 2h sword"
-                                onKeyDown={(e) => e.key === "Enter" && handleLookup()}
-                                style={{ flex: 1 }}
-                            />
-                            <button id="lookup-item-btn" onClick={handleLookup} style={{ marginTop: 0 }}>
-                                🔍 Lookup
-                            </button>
-                        </div>
+                    <label className="flex flex-col gap-2 text-base">
+                        Search for Item:
+                        <ItemSearch
+                            items={items}
+                            placeholder="e.g., Rune 2h sword"
+                            onSelect={handleItemSelect}
+                        />
+                        {itemName && (
+                            <div className="text-sm text-osrs-accent mt-1">
+                                Selected: {itemName}
+                            </div>
+                        )}
                     </label>
-                    <label>
+                    <label className="flex flex-col gap-2 text-base">
                         Alch Value (GP):
                         <input
                             type="number"
                             value={alchValue}
                             onChange={(e) => setAlchValue(parseFloat(e.target.value) || 0)}
                             min="0"
+                            className="p-2.5 bg-osrs-input border border-osrs-border rounded text-black text-base focus:outline-none focus:border-osrs-accent"
                         />
                     </label>
-                    <label>
+                    <label className="flex flex-col gap-2 text-base">
                         Quantity (optional):
                         <input
                             type="number"
@@ -202,57 +162,68 @@ export default function AlchemyCalculator({ items }: AlchemyCalculatorProps) {
                             onChange={(e) => setQuantity(e.target.value ? parseFloat(e.target.value) : null)}
                             placeholder="Leave blank for auto-calculate"
                             min="1"
+                            className="p-2.5 bg-osrs-input border border-osrs-border rounded text-black text-base focus:outline-none focus:border-osrs-accent"
                         />
                     </label>
-                    <button type="button" id="calculate-btn" onClick={handleCalculate}>
+                    <button
+                        type="button"
+                        id="calculate-btn"
+                        onClick={handleCalculate}
+                        className="mt-4 btn-primary text-lg w-full md:w-auto"
+                    >
                         Calculate
                     </button>
                 </div>
 
-                <div className="calculator-results">
-                    <h3>Calculation Results</h3>
-                    <div id="results-display">
-                        <p><strong>Starting Capital:</strong> <span>{results ? results.startingCapital.toLocaleString() : "-"}</span> GP</p>
-                        <p><strong>Item Price:</strong> <span>{results ? results.itemPrice.toLocaleString() : "-"}</span> GP</p>
-                        <p><strong>Alch Value:</strong> <span>{results ? results.alchValue.toLocaleString() : "-"}</span> GP</p>
-                        <p><strong>Quantity:</strong> <span>{results ? results.quantity.toLocaleString() : "-"}</span></p>
-                        <p><strong>Cost Paid:</strong> <span>{results ? results.costPaid.toLocaleString() : "-"}</span> GP</p>
-                        <p><strong>Leftover:</strong> <span>{results ? results.leftoverCapital.toLocaleString() : "-"}</span> GP</p>
-                        <p>
-                            <strong>Profit:</strong>{" "}
-                            <span className={results ? (results.profit >= 0 ? "value-positive" : "value-negative") : ""}>
+                <div className="mb-8 p-4 bg-osrs-panel rounded">
+                    <h3 className="text-osrs-accent mb-4">Calculation Results</h3>
+                    <div id="results-display" className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
+                        <p className="my-2 p-2 bg-osrs-input rounded"><strong className="text-osrs-accent">Starting Capital:</strong> <span>{results ? results.startingCapital.toLocaleString() : "-"}</span> GP</p>
+                        <p className="my-2 p-2 bg-osrs-input rounded"><strong className="text-osrs-accent">Item Price:</strong> <span>{results ? results.itemPrice.toLocaleString() : "-"}</span> GP</p>
+                        <p className="my-2 p-2 bg-osrs-input rounded"><strong className="text-osrs-accent">Alch Value:</strong> <span>{results ? results.alchValue.toLocaleString() : "-"}</span> GP</p>
+                        <p className="my-2 p-2 bg-osrs-input rounded"><strong className="text-osrs-accent">Quantity:</strong> <span>{results ? results.quantity.toLocaleString() : "-"}</span></p>
+                        <p className="my-2 p-2 bg-osrs-input rounded"><strong className="text-osrs-accent">Cost Paid:</strong> <span>{results ? results.costPaid.toLocaleString() : "-"}</span> GP</p>
+                        <p className="my-2 p-2 bg-osrs-input rounded"><strong className="text-osrs-accent">Leftover:</strong> <span>{results ? results.leftoverCapital.toLocaleString() : "-"}</span> GP</p>
+                        <p className="my-2 p-2 bg-osrs-input rounded">
+                            <strong className="text-osrs-accent">Profit:</strong>{" "}
+                            <span className={results ? (results.profit >= 0 ? "text-[#014cc0]" : "text-[#c02614]") : ""}>
                                 {results ? results.profit.toLocaleString() : "-"}
                             </span>{" "}
                             GP
                         </p>
-                        <p><strong>Ending Capital:</strong> <span>{results ? results.endingCapital.toLocaleString() : "-"}</span> GP</p>
+                        <p className="my-2 p-2 bg-osrs-input rounded"><strong className="text-osrs-accent">Ending Capital:</strong> <span>{results ? results.endingCapital.toLocaleString() : "-"}</span> GP</p>
                     </div>
                 </div>
 
-                <div className="calculator-log">
-                    <h3>Trade Log</h3>
-                    <div id="trade-log">
+                <div className="p-4 bg-osrs-panel rounded">
+                    <h3 className="text-osrs-accent mb-4">Trade Log</h3>
+                    <div id="trade-log" className="max-h-[400px] overflow-y-auto mb-4 p-4 bg-osrs-input rounded">
                         {log.map((entry) => (
-                            <div key={entry.id} className="log-entry">
-                                <p><strong>Trade #{entry.id}</strong></p>
-                                <p>Starting Capital: {entry.startingCapital.toLocaleString()} GP</p>
-                                <p>Item Price: {entry.itemPrice.toLocaleString()} GP</p>
-                                <p>Alch Value: {entry.alchValue.toLocaleString()} GP</p>
-                                <p>Quantity: {entry.quantity.toLocaleString()}</p>
-                                <p>Cost Paid: {entry.costPaid.toLocaleString()} GP</p>
-                                <p>Leftover: {entry.leftoverCapital.toLocaleString()} GP</p>
-                                <p>
+                            <div key={entry.id} className="mb-4 p-4 bg-[#d8ccb4] rounded border-l-[3px] border-l-osrs-accent">
+                                <p><strong className="text-osrs-accent">Trade #{entry.id}</strong></p>
+                                <p className="my-1">Starting Capital: {entry.startingCapital.toLocaleString()} GP</p>
+                                <p className="my-1">Item Price: {entry.itemPrice.toLocaleString()} GP</p>
+                                <p className="my-1">Alch Value: {entry.alchValue.toLocaleString()} GP</p>
+                                <p className="my-1">Quantity: {entry.quantity.toLocaleString()}</p>
+                                <p className="my-1">Cost Paid: {entry.costPaid.toLocaleString()} GP</p>
+                                <p className="my-1">Leftover: {entry.leftoverCapital.toLocaleString()} GP</p>
+                                <p className="my-1">
                                     Profit:{" "}
-                                    <span className={entry.profit >= 0 ? "value-positive" : "value-negative"}>
+                                    <span className={entry.profit >= 0 ? "text-[#014cc0]" : "text-[#c02614]"}>
                                         {entry.profit.toLocaleString()} GP
                                     </span>
                                 </p>
-                                <p>Ending Capital: {entry.endingCapital.toLocaleString()} GP</p>
-                                <hr />
+                                <p className="my-1">Ending Capital: {entry.endingCapital.toLocaleString()} GP</p>
+                                <hr className="border-t border-osrs-border mt-2" />
                             </div>
                         ))}
                     </div>
-                    <button type="button" id="clear-log-btn" onClick={() => setLog([])}>
+                    <button
+                        type="button"
+                        id="clear-log-btn"
+                        onClick={() => setLog([])}
+                        className="bg-[#c02614] text-[#f5e6d3] px-5 py-2 border border-[#3e2616] rounded font-header font-bold cursor-pointer hover:bg-[#c02614] shadow-sm"
+                    >
                         Clear Log
                     </button>
                 </div>

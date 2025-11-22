@@ -1,14 +1,11 @@
-import { fetchFlippingData } from "@/lib/api";
+"use client";
+
 import FlippingFinder from "@/components/FlippingFinder";
 
-export const revalidate = 60; // Revalidate every minute
-
-export default async function Home() {
-  const data = await fetchFlippingData();
-
+export default function Home() {
   return (
     <main>
-      <FlippingFinder initialData={data} />
+      <FlippingFinder />
     </main>
   );
 }

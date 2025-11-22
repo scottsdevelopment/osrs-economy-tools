@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --color-osrs-bg: #c0a886;
+  --color-osrs-text: #1a1a1a;
+  --color-osrs-primary: #5a3820;
+  --color-osrs-accent: #936039;
+  --color-osrs-panel: #d1c6a6;
+  --color-osrs-input: #e2dbc8;
+  --color-osrs-button: #b8a282;
+  --color-osrs-button-hover: #d0bd97;
+  --color-osrs-border: #94866d;
+
+  --font-main: 'Inter', sans-serif;
+  --font-header: 'Cinzel', serif;
+}
+
+:root {
+  --foreground-rgb: 26, 26, 26;
+  --background-rgb: 192, 168, 134;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+  font-family: var(--font-main);
+  text-align: center;
+  line-height: 1.6;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-header);
+  color: #5a3820;
+  margin-bottom: 0.5em;
+  font-weight: 700;
+}
+
+h1 {
+  font-size: 2.5rem;
+  text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.2);
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-osrs-primary text-[#f5e6d3] px-5 py-2.5 border border-[#3e2616] rounded font-header font-bold cursor-pointer transition-all shadow-sm hover:bg-[#7a4d2b] hover:-translate-y-px hover:shadow-md active:translate-y-0 active:shadow-sm;
+  }
+}

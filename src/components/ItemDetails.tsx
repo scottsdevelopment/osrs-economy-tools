@@ -1,8 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { getItemImageUrl } from "@/lib/api";
 import { ItemMapping, PriceData } from "@/lib/types";
 import ItemCharts from "./ItemCharts";
-import "./ItemDetails.scss";
 
 interface ItemDetailsProps {
     item: ItemMapping;
@@ -31,97 +32,97 @@ export default function ItemDetails({ item, price, volume }: ItemDetailsProps) {
     const alchProfit = item.highalch && price.low ? item.highalch - price.low : 0;
 
     return (
-        <div className="item-details-container">
-            <div className="nav-header">
-                <Link href="/" className="back-btn">
+        <div className="max-w-[1000px] mx-auto bg-[#d8ccb4] p-8 rounded-lg shadow-[0_0_10px_rgba(0,0,0,0.3)] text-left">
+            <div className="flex justify-between items-center mb-4">
+                <Link href="/" className="text-osrs-accent hover:underline">
                     ← Back to List
                 </Link>
-                <h1>💰 OSRS Economy Tools</h1>
             </div>
 
-            <div className="item-header">
+            <div className="flex items-center gap-4 mb-4 border-b-2 border-osrs-border pb-4">
                 <img
                     id="item-icon"
                     src={getItemImageUrl(item.name)}
                     alt={item.name}
+                    className="w-16 h-16"
                     onError={(e) => {
                         (e.target as HTMLImageElement).style.display = "none";
                     }}
                 />
-                <div className="item-title">
-                    <h2>{item.name}</h2>
-                    <span className="item-id">(Item ID: {item.id})</span>
+                <div className="flex-1">
+                    <h2 className="m-0 text-osrs-accent text-3xl font-header font-bold">{item.name}</h2>
+                    <span className="text-[#666] text-sm">(Item ID: {item.id})</span>
                 </div>
-                <div className="item-badges">
+                <div className="flex gap-2">
                     {item.members ? (
-                        <span className="badge members">Members</span>
+                        <span className="px-3 py-1 rounded-xl text-xs font-bold text-white bg-[#d9534f]">Members</span>
                     ) : (
-                        <span className="badge f2p">F2P</span>
+                        <span className="px-3 py-1 rounded-xl text-xs font-bold text-white bg-[#5bc0de]">F2P</span>
                     )}
                 </div>
             </div>
 
-            <p className="item-examine">{item.examine}</p>
+            <p className="italic text-[#555] mb-8">{item.examine}</p>
 
-            <div className="stats-grid">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-6 mb-8">
                 {/* Buy Side */}
-                <div className="stat-card buy-card" style={{ background: "#e2dbc8", padding: "1em", borderRadius: "8px", borderLeft: "4px solid #014cc0" }}>
-                    <div className="stat-content">
-                        <h3 style={{ color: "#014cc0", marginBottom: "0.5em" }}>Buy Price</h3>
-                        <p className="price-large" style={{ fontSize: "1.5em", fontWeight: "bold" }}>{formatNumber(price.low)}</p>
-                        <p className="sub-text" style={{ fontSize: "0.9em", color: "#666" }}>Last trade: {timeAgo(price.lowTime)}</p>
+                <div className="bg-osrs-input p-6 rounded-lg border border-osrs-border flex items-center gap-4 border-l-4 border-l-[#014cc0]">
+                    <div className="flex-1">
+                        <h3 className="m-0 mb-2 text-base text-[#014cc0]">Buy Price</h3>
+                        <p className="text-2xl font-bold m-0">{formatNumber(price.low)}</p>
+                        <p className="text-sm text-[#666] mt-1">Last trade: {timeAgo(price.lowTime)}</p>
                     </div>
                 </div>
 
                 {/* Sell Side */}
-                <div className="stat-card sell-card" style={{ background: "#e2dbc8", padding: "1em", borderRadius: "8px", borderLeft: "4px solid #c02614" }}>
-                    <div className="stat-content">
-                        <h3 style={{ color: "#c02614", marginBottom: "0.5em" }}>Sell Price</h3>
-                        <p className="price-large" style={{ fontSize: "1.5em", fontWeight: "bold" }}>{formatNumber(price.high)}</p>
-                        <p className="sub-text" style={{ fontSize: "0.9em", color: "#666" }}>Last trade: {timeAgo(price.highTime)}</p>
+                <div className="bg-osrs-input p-6 rounded-lg border border-osrs-border flex items-center gap-4 border-l-4 border-l-[#c02614]">
+                    <div className="flex-1">
+                        <h3 className="m-0 mb-2 text-base text-[#c02614]">Sell Price</h3>
+                        <p className="text-2xl font-bold m-0">{formatNumber(price.high)}</p>
+                        <p className="text-sm text-[#666] mt-1">Last trade: {timeAgo(price.highTime)}</p>
                     </div>
                 </div>
 
                 {/* Margin */}
-                <div className="stat-card margin-card" style={{ background: "#e2dbc8", padding: "1em", borderRadius: "8px", borderLeft: "4px solid #936039" }}>
-                    <div className="stat-content">
-                        <h3 style={{ color: "#936039", marginBottom: "0.5em" }}>Margin</h3>
-                        <p className={`price-medium ${margin > 0 ? "value-positive" : "value-negative"}`} style={{ fontSize: "1.2em", fontWeight: "bold" }}>
+                <div className="bg-osrs-input p-6 rounded-lg border border-osrs-border flex items-center gap-4 border-l-4 border-l-[#936039]">
+                    <div className="flex-1">
+                        <h3 className="m-0 mb-2 text-base text-[#936039]">Margin</h3>
+                        <p className={`text-xl font-bold m-0 ${margin > 0 ? "text-[#014cc0]" : "text-[#c02614]"}`}>
                             {Math.round(margin).toLocaleString()}
                         </p>
-                        <p className="sub-text" style={{ fontSize: "0.9em", color: "#666" }}>ROI: {roi.toFixed(2)}%</p>
+                        <p className="text-sm text-[#666] mt-1">ROI: {roi.toFixed(2)}%</p>
                     </div>
                 </div>
 
                 {/* Profit Potential */}
-                <div className="stat-card profit-card" style={{ background: "#e2dbc8", padding: "1em", borderRadius: "8px", borderLeft: "4px solid #28a745" }}>
-                    <div className="stat-content">
-                        <h3 style={{ color: "#28a745", marginBottom: "0.5em" }}>Potential Profit</h3>
-                        <p className={`price-large highlight ${potentialProfit > 0 ? "value-positive" : "value-negative"}`} style={{ fontSize: "1.5em", fontWeight: "bold" }}>
+                <div className="bg-osrs-input p-6 rounded-lg border border-osrs-border flex items-center gap-4 border-l-4 border-l-[#28a745]">
+                    <div className="flex-1">
+                        <h3 className="m-0 mb-2 text-base text-[#28a745]">Potential Profit</h3>
+                        <p className={`text-2xl font-bold m-0 text-osrs-accent ${potentialProfit > 0 ? "text-[#014cc0]" : "text-[#c02614]"}`}>
                             {Math.round(potentialProfit).toLocaleString()}
                         </p>
-                        <p className="sub-text" style={{ fontSize: "0.9em", color: "#666" }}>Limit: {formatNumber(item.limit)}</p>
+                        <p className="text-sm text-[#666] mt-1">Limit: {formatNumber(item.limit)}</p>
                     </div>
                 </div>
             </div>
 
-            <div className="details-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1em", marginTop: "2em", padding: "1em", background: "#d1c6a6", borderRadius: "8px" }}>
-                <div className="detail-row">
-                    <strong>Daily Volume: </strong>
-                    <span>{formatNumber(volume)}</span>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-4 bg-osrs-panel p-6 rounded-lg mb-8">
+                <div className="flex flex-col gap-1">
+                    <strong className="text-sm text-[#666] font-bold">Daily Volume: </strong>
+                    <span className="text-lg">{formatNumber(volume)}</span>
                 </div>
-                <div className="detail-row">
-                    <strong>High Alch: </strong>
-                    <span>{formatNumber(item.highalch)}</span>
+                <div className="flex flex-col gap-1">
+                    <strong className="text-sm text-[#666] font-bold">High Alch: </strong>
+                    <span className="text-lg">{formatNumber(item.highalch)}</span>
                 </div>
-                <div className="detail-row">
-                    <strong>Low Alch: </strong>
-                    <span>{formatNumber(item.lowalch)}</span>
+                <div className="flex flex-col gap-1">
+                    <strong className="text-sm text-[#666] font-bold">Low Alch: </strong>
+                    <span className="text-lg">{formatNumber(item.lowalch)}</span>
                 </div>
-                <div className="detail-row">
-                    <strong>Alch Profit: </strong>
-                    <span className={alchProfit > 0 ? "value-positive" : "value-negative"}>
-                        {formatNumber(alchProfit)} <span style={{ fontSize: "0.8em", color: "#666" }}>(excl. nat)</span>
+                <div className="flex flex-col gap-1">
+                    <strong className="text-sm text-[#666] font-bold">Alch Profit: </strong>
+                    <span className={`text-lg ${alchProfit > 0 ? "text-[#014cc0]" : "text-[#c02614]"}`}>
+                        {formatNumber(alchProfit)} <span className="text-sm text-[#666]">(excl. nat)</span>
                     </span>
                 </div>
             </div>

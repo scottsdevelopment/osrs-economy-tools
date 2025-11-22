@@ -1,15 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { fetchFlippingData } from "@/lib/api";
+
+import React, { useState } from "react";
 import { ProcessedItem, FilterState } from "@/lib/types";
 import Filters from "./Filters";
 import FlippingTable from "./FlippingTable";
-import "./FlippingFinder.scss";
-
-interface FlippingFinderProps {
-    initialData: ProcessedItem[];
-}
+import { useItemData } from "@/context/ItemDataContext";
 
 const initialFilters: FilterState = {
     f2pOnly: false,
@@ -32,20 +28,12 @@ const initialFilters: FilterState = {
     minSellPressure1h: null,
 };
 
-export default function FlippingFinder({ initialData }: FlippingFinderProps) {
-    const [data, setData] = useState<ProcessedItem[]>(initialData);
+export default function FlippingFinder() {
+    const { items, loading } = useItemData();
     const [filters, setFilters] = useState<FilterState>(initialFilters);
-    const [loading, setLoading] = useState(false);
-
-    const handleRefresh = async () => {
-        setLoading(true);
-        const newData = await fetchFlippingData();
-        setData(newData);
-        setLoading(false);
-    };
 
     // Filter logic
-    const filteredItems = data.filter((item) => {
+    const filteredItems = items.filter((item) => {
         if (filters.f2pOnly && item.members) return false;
         if (filters.minVolume !== null && item.volume < filters.minVolume) return false;
         if (filters.minBuyPrice !== null && item.low < filters.minBuyPrice) return false;
@@ -76,17 +64,11 @@ export default function FlippingFinder({ initialData }: FlippingFinderProps) {
         return true;
     });
 
-    // Auto-refresh every 5 minutes
-    useEffect(() => {
-        const interval = setInterval(handleRefresh, 5 * 60 * 1000);
-        return () => clearInterval(interval);
-    }, []);
-
     return (
-        <div id="flipping-tab" className="tab-content active" style={{ display: "block" }}>
-            <Filters filters={filters} setFilters={setFilters} onRefresh={handleRefresh} />
-            {loading ? (
-                <div className="text-center p-4">Loading data...</div>
+        <div id="flipping-tab" className="block w-full">
+            <Filters filters={filters} setFilters={setFilters} />
+            {loading && items.length === 0 ? (
+                <div className="text-center p-4 text-osrs-text">Loading data...</div>
             ) : (
                 <FlippingTable items={filteredItems} />
             )}
