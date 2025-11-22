@@ -4,48 +4,52 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
+
   <!-- Primary Meta Tags -->
   <title>💰 OSRS Economy Tools - Flipping Finder & Alchemy Calculator</title>
   <meta name="title" content="💰 OSRS Economy Tools - Flipping Finder & Alchemy Calculator" />
-  <meta name="description" content="Free OSRS economy tools including a flipping finder with real-time Grand Exchange prices and an alchemy trade calculator. Find profitable items to flip and calculate high alchemy profits in Old School RuneScape." />
-  <meta name="keywords" content="OSRS, Old School RuneScape, GE flipping, Grand Exchange, high alchemy calculator, OSRS profit calculator, RuneScape tools, OSRS flipper, GE prices, OSRS economy, flipping guide, alchemy profit calculator" />
+  <meta name="description"
+    content="Free OSRS economy tools including a flipping finder with real-time Grand Exchange prices and an alchemy trade calculator. Find profitable items to flip and calculate high alchemy profits in Old School RuneScape." />
+  <meta name="keywords"
+    content="OSRS, Old School RuneScape, GE flipping, Grand Exchange, high alchemy calculator, OSRS profit calculator, RuneScape tools, OSRS flipper, GE prices, OSRS economy, flipping guide, alchemy profit calculator" />
   <meta name="author" content="OSRS Economy Tools" />
   <meta name="robots" content="index, follow" />
   <meta name="language" content="English" />
   <meta name="revisit-after" content="7 days" />
-  
+
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://scottsdevelopment.github.io/osrs-economy-tools/" />
   <meta property="og:title" content="💰 OSRS Economy Tools - Flipping Finder & Alchemy Calculator" />
-  <meta property="og:description" content="Free OSRS economy tools including a flipping finder with real-time Grand Exchange prices and an alchemy trade calculator. Find profitable items to flip and calculate high alchemy profits." />
+  <meta property="og:description"
+    content="Free OSRS economy tools including a flipping finder with real-time Grand Exchange prices and an alchemy trade calculator. Find profitable items to flip and calculate high alchemy profits." />
   <meta property="og:image" content="https://scottsdevelopment.github.io/osrs-economy-tools/banner.png" />
   <meta property="og:site_name" content="OSRS Economy Tools" />
   <meta property="og:locale" content="en_US" />
-  
+
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image" />
   <meta property="twitter:url" content="https://scottsdevelopment.github.io/osrs-economy-tools/" />
   <meta property="twitter:title" content="💰 OSRS Economy Tools - Flipping Finder & Alchemy Calculator" />
-  <meta property="twitter:description" content="Free OSRS economy tools including a flipping finder with real-time Grand Exchange prices and an alchemy trade calculator. Find profitable items to flip and calculate high alchemy profits." />
+  <meta property="twitter:description"
+    content="Free OSRS economy tools including a flipping finder with real-time Grand Exchange prices and an alchemy trade calculator. Find profitable items to flip and calculate high alchemy profits." />
   <meta property="twitter:image" content="https://scottsdevelopment.github.io/osrs-economy-tools/banner.png" />
-  
+
   <!-- Additional Meta Tags -->
   <meta name="theme-color" content="#936039" />
   <meta name="application-name" content="OSRS Economy Tools" />
   <meta name="apple-mobile-web-app-title" content="OSRS Tools" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  
+
   <!-- Canonical URL -->
   <link rel="canonical" href="https://scottsdevelopment.github.io/osrs-economy-tools/" />
-  
+
   <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="favico.ico" />
   <link rel="shortcut icon" type="image/x-icon" href="favico.ico" />
   <link rel="apple-touch-icon" href="favico.ico" />
-  
+
   <link rel="stylesheet" href="style.css" />
 </head>
 
@@ -61,88 +65,143 @@
 
   <div id="flipping-tab" class="tab-content active">
     <div class="controls">
-      <div class="filter-row">
-        <label>
-          Min Volume:
-          <input type="number" id="min-volume" min="0" />
-        </label>
-
-        <label>
-          Min Buy Price:
-          <input type="number" id="min-buy-price" min="0" />
-        </label>
-
-        <label>
-          Max Buy Price:
-          <input type="number" id="max-buy-price" min="0" />
-        </label>
-
-        <label>
-          Min Sell Price:
-          <input type="number" id="min-sell-price" min="0" />
-        </label>
-
-        <label>
-          Max Sell Price:
-          <input type="number" id="max-sell-price" min="0" />
-        </label>
+      <!-- Search & Options -->
+      <div class="filter-group full-width">
+        <div class="search-container">
+          <input type="text" id="search-bar" placeholder="🔍 Search item..." />
+          <button id="refresh-btn">🔄 Refresh</button>
+        </div>
+        <div class="checkbox-container">
+          <label class="checkbox-label">
+            <input type="checkbox" id="f2p-filter" />
+            <span>F2P Only</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="show-all" />
+            <span>Show Full List</span>
+          </label>
+        </div>
       </div>
 
-      <div class="filter-row">
-        <label>
-          Min Profit:
-          <input type="number" id="min-profit" min="0" />
-        </label>
+      <!-- Price Settings -->
+      <fieldset class="filter-group">
+        <legend>Price Settings</legend>
+        <div class="input-grid">
+          <label>
+            <span>Min Buy Price</span>
+            <input type="number" id="min-buy-price" min="0" placeholder="0" />
+          </label>
+          <label>
+            <span>Max Buy Price</span>
+            <input type="number" id="max-buy-price" min="0" placeholder="∞" />
+          </label>
+          <label>
+            <span>Min Sell Price</span>
+            <input type="number" id="min-sell-price" min="0" placeholder="0" />
+          </label>
+          <label>
+            <span>Max Sell Price</span>
+            <input type="number" id="max-sell-price" min="0" placeholder="∞" />
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="buy-under-5m" />
+            <span>Buy < 5m Avg</span>
+          </label>
+        </div>
+      </fieldset>
 
-        <label>
-          Min ROI %:
-          <input type="number" id="min-roi" min="0" step="0.1" />
-        </label>
+      <!-- Profitability -->
+      <fieldset class="filter-group">
+        <legend>Profitability</legend>
+        <div class="input-grid">
+          <label>
+            <span>Min Profit</span>
+            <input type="number" id="min-profit" min="0" placeholder="0" />
+          </label>
+          <label>
+            <span>Min ROI %</span>
+            <input type="number" id="min-roi" min="0" step="0.1" placeholder="0" />
+          </label>
+          <label>
+            <span>Limit</span>
+            <input type="number" id="limit-filter" min="0" placeholder="Any" />
+          </label>
+          <label>
+            <span>Min Volume (24h)</span>
+            <input type="number" id="min-volume" min="0" placeholder="0" />
+          </label>
+        </div>
+      </fieldset>
 
-        <label>
-          Limit:
-          <input type="number" id="limit-filter" min="0" />
-        </label>
-      </div>
+      <!-- Short-Term (5m) -->
+      <fieldset class="filter-group">
+        <legend>Short-Term (5m)</legend>
+        <div class="input-grid">
+          <label>
+            <span>Min 5m Vol</span>
+            <input type="number" id="min-5m-vol" min="0" placeholder="50" />
+          </label>
+          <label>
+            <span>Min Buy Pressure %</span>
+            <input type="number" id="min-buy-pressure-5m" min="0" max="100" placeholder="0" />
+          </label>
+          <label>
+            <span>Min Sell Pressure %</span>
+            <input type="number" id="min-sell-pressure-5m" min="0" max="100" placeholder="0" />
+          </label>
+        </div>
+      </fieldset>
 
-      <div class="filter-row">
-        <input type="text" id="search-bar" placeholder="🔍 Search item..." />
-      </div>
-
-      <div class="filter-row">
-        <button id="refresh-btn">🔄 Refresh</button>
-
-        <label>
-          <input type="checkbox" id="f2p-filter" />
-          F2P Only
-        </label>
-
-        <label>
-          <input type="checkbox" id="show-all" />
-          Show Full List
-        </label>
-      </div>
+      <!-- Long-Term (1h) -->
+      <fieldset class="filter-group">
+        <legend>Long-Term (1h)</legend>
+        <div class="input-grid">
+          <label>
+            <span>Min 1h Vol</span>
+            <input type="number" id="min-1h-vol" min="0" placeholder="0" />
+          </label>
+          <label>
+            <span>Min Buy Pressure %</span>
+            <input type="number" id="min-buy-pressure-1h" min="0" max="100" placeholder="0" />
+          </label>
+          <label>
+            <span>Min Sell Pressure %</span>
+            <input type="number" id="min-sell-pressure-1h" min="0" max="100" placeholder="0" />
+          </label>
+        </div>
+      </fieldset>
     </div>
 
     <table id="flip-table">
       <thead>
         <tr>
-          <th data-sort="name">Item</th>
-          <th data-sort="low">Buy (Low)</th>
-          <th data-sort="high">Sell (High)</th>
-          <th data-sort="profit">Profit (GP)</th>
-          <th data-sort="limit">Limit</th>
-          <th data-sort="roi">ROI % (after 2% fee)</th>
-          <th data-sort="volume">Volume</th>
-          <th>5m Avg</th>
-          <th>1h Avg</th>
-          <th data-sort="alchValue">High Alch Value</th>
-          <th data-sort="alchMargin">High Alch Margin</th>
+          <th style="width: 40px;"></th> <!-- Image column -->
+          <th data-sort="name" data-tooltip="The name of the item">Item</th>
+          <th data-sort="low" data-tooltip="Current lowest price someone is selling for (instant buy)">Buy (Low)</th>
+          <th data-sort="high" data-tooltip="Current highest price someone is buying for (instant sell)">Sell (High)
+          </th>
+          <th data-sort="profit" data-tooltip="Potential profit per item after tax (High * 0.98 - Low)">Profit (GP)</th>
+          <th data-sort="limit" data-tooltip="Grand Exchange buy limit every 4 hours">Limit</th>
+          <th data-sort="roi" data-tooltip="Return on Investment percentage">ROI %</th>
+          <th data-sort="volume" data-tooltip="Total number of items traded in the last 24 hours">Vol (24h)</th>
+          <th data-sort="avg5m" data-tooltip="Average price over the last 5 minutes">5m Avg</th>
+          <th data-sort="total5mVol" data-tooltip="Total volume traded in the last 5 minutes">5m Vol</th>
+          <th data-sort="avg1h" data-tooltip="Average price over the last hour">1h Avg</th>
+          <th data-sort="total1hVol" data-tooltip="Total volume traded in the last hour">1h Vol</th>
+          <th data-sort="buyPressure5m" data-tooltip="% of 5m volume that was bought (indicates demand)">5m Buy %</th>
+          <th data-sort="sellPressure5m" data-tooltip="% of 5m volume that was sold (indicates supply)">5m Sell %</th>
+          <th data-sort="buyPressure1h" data-tooltip="% of 1h volume that was bought">1h Buy %</th>
+          <th data-sort="sellPressure1h" data-tooltip="% of 1h volume that was sold">1h Sell %</th>
+          <th data-sort="volRatio" data-tooltip="Ratio of 5m volume to 1h volume (higher means spiking activity)">5m/1h
+            Ratio</th>
+          <th data-sort="alchValue" data-tooltip="Value of the item when cast with High Level Alchemy">High Alch</th>
+          <th data-sort="alchMargin"
+            data-tooltip="Profit from High Alchemy (Alch Value - Buy Price - Nature Rune cost)">Alch Margin</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td colspan="11">Loading...</td>
+          <td colspan="19">Loading...</td>
         </tr>
       </tbody>
     </table>
@@ -223,30 +282,37 @@
     <table id="decant-table">
       <thead>
         <tr>
-          <th data-sort="name" rowspan="2">Potion</th>
-          <th colspan="4" style="text-align: center;">Volume</th>
-          <th colspan="4" style="text-align: center;">Price</th>
-          <th colspan="4" style="text-align: center;">Cost/Charge</th>
-          <th data-sort="profit1to4" rowspan="2">Profit (1→4)</th>
-          <th data-sort="profit2to4" rowspan="2">Profit (2→4)</th>
-          <th data-sort="profit3to4" rowspan="2">Profit (3→4)</th>
-          <th data-sort="profitPerDecant1" rowspan="2">Profit/Decant (1→4)</th>
-          <th data-sort="profitPerDecant2" rowspan="2">Profit/Decant (2→4)</th>
-          <th data-sort="profitPerDecant3" rowspan="2">Profit/Decant (3→4)</th>
+          <th data-sort="name" rowspan="2" data-tooltip="Name of the potion">Potion</th>
+          <th colspan="4" style="text-align: center;" data-tooltip="Volume traded in the last 24 hours">Volume</th>
+          <th colspan="4" style="text-align: center;" data-tooltip="Current buy price for each dose">Price</th>
+          <th colspan="4" style="text-align: center;" data-tooltip="Cost per single dose based on current price">
+            Cost/Charge</th>
+          <th data-sort="profit1to4" rowspan="2" data-tooltip="Profit from decanting (1) dose potions into (4) dose">
+            Profit (1→4)</th>
+          <th data-sort="profit2to4" rowspan="2" data-tooltip="Profit from decanting (2) dose potions into (4) dose">
+            Profit (2→4)</th>
+          <th data-sort="profit3to4" rowspan="2" data-tooltip="Profit from decanting (3) dose potions into (4) dose">
+            Profit (3→4)</th>
+          <th data-sort="profitPerDecant1" rowspan="2" data-tooltip="Profit per single decant operation (1→4)">
+            Profit/Decant (1→4)</th>
+          <th data-sort="profitPerDecant2" rowspan="2" data-tooltip="Profit per single decant operation (2→4)">
+            Profit/Decant (2→4)</th>
+          <th data-sort="profitPerDecant3" rowspan="2" data-tooltip="Profit per single decant operation (3→4)">
+            Profit/Decant (3→4)</th>
         </tr>
         <tr>
-          <th data-sort="volume1">(1)</th>
-          <th data-sort="volume2">(2)</th>
-          <th data-sort="volume3">(3)</th>
-          <th data-sort="volume4">(4)</th>
-          <th data-sort="price1">(1)</th>
-          <th data-sort="price2">(2)</th>
-          <th data-sort="price3">(3)</th>
-          <th data-sort="price4">(4)</th>
-          <th data-sort="costPerCharge1">(1)</th>
-          <th data-sort="costPerCharge2">(2)</th>
-          <th data-sort="costPerCharge3">(3)</th>
-          <th data-sort="costPerCharge4">(4)</th>
+          <th data-sort="volume1" data-tooltip="24h Volume for (1) dose">(1)</th>
+          <th data-sort="volume2" data-tooltip="24h Volume for (2) dose">(2)</th>
+          <th data-sort="volume3" data-tooltip="24h Volume for (3) dose">(3)</th>
+          <th data-sort="volume4" data-tooltip="24h Volume for (4) dose">(4)</th>
+          <th data-sort="price1" data-tooltip="Buy price for (1) dose">(1)</th>
+          <th data-sort="price2" data-tooltip="Buy price for (2) dose">(2)</th>
+          <th data-sort="price3" data-tooltip="Buy price for (3) dose">(3)</th>
+          <th data-sort="price4" data-tooltip="Buy price for (4) dose">(4)</th>
+          <th data-sort="costPerCharge1" data-tooltip="Cost per dose for (1) dose potion">(1)</th>
+          <th data-sort="costPerCharge2" data-tooltip="Cost per dose for (2) dose potion">(2)</th>
+          <th data-sort="costPerCharge3" data-tooltip="Cost per dose for (3) dose potion">(3)</th>
+          <th data-sort="costPerCharge4" data-tooltip="Cost per dose for (4) dose potion">(4)</th>
         </tr>
       </thead>
       <tbody>

@@ -9,7 +9,8 @@ const tableBody = document.querySelector("#flip-table tbody");
 const refreshBtn = document.querySelector("#refresh-btn");
 const f2pFilterCheckbox = document.querySelector("#f2p-filter");
 const showAllCheckbox = document.querySelector("#show-all");
-const headers = document.querySelectorAll("th[data-sort]");
+const buyUnder5mCheckbox = document.querySelector("#buy-under-5m");
+const headers = document.querySelectorAll("#flip-table th[data-sort]");
 const minVolumeInput = document.querySelector("#min-volume");
 const minBuyPriceInput = document.querySelector("#min-buy-price");
 const maxBuyPriceInput = document.querySelector("#max-buy-price");
@@ -19,12 +20,25 @@ const minProfitInput = document.querySelector("#min-profit");
 const minRoiInput = document.querySelector("#min-roi");
 const limitFilterInput = document.querySelector("#limit-filter");
 const searchBar = document.querySelector("#search-bar");
+const min5mVolInput = document.querySelector("#min-5m-vol");
+const minBuyPressure5mInput = document.querySelector("#min-buy-pressure-5m");
+const minSellPressure5mInput = document.querySelector("#min-sell-pressure-5m");
+const min1hVolInput = document.querySelector("#min-1h-vol");
+const minBuyPressure1hInput = document.querySelector("#min-buy-pressure-1h");
+const minSellPressure1hInput = document.querySelector("#min-sell-pressure-1h");
+
+// Inject sort icon span into all sortable headers
+document.querySelectorAll("th[data-sort]").forEach(th => {
+  const icon = document.createElement("span");
+  icon.className = "sort-icon";
+  th.appendChild(icon);
+});
 
 let allItems = [];
 let currentSort = { key: "profit", direction: "desc" };
 
 async function fetchData() {
-  tableBody.innerHTML = "<tr><td colspan='11'>Loading data...</td></tr>";
+  tableBody.innerHTML = "<tr><td colspan='19'>Loading data...</td></tr>";
 
   try {
     const [latestRes, mappingRes, fiveMRes, oneHRes, volumesRes] = await Promise.all([
@@ -58,9 +72,27 @@ async function fetchData() {
       const netProfit = highAfterFee - low;
       const roi = (netProfit / low) * 100;
 
-      const avg5m = fiveM[id]?.avgHighPrice || "-";
-      const avg1h = oneH[id]?.avgHighPrice || "-";
-      
+      // 5m Data
+      const item5m = fiveM[id];
+      const avg5m = item5m?.avgHighPrice || "-";
+      const highVol5m = item5m?.highPriceVolume || 0;
+      const lowVol5m = item5m?.lowPriceVolume || 0;
+      const total5mVol = highVol5m + lowVol5m;
+      const buyPressure5m = total5mVol > 0 ? (highVol5m / total5mVol) * 100 : 0;
+      const sellPressure5m = total5mVol > 0 ? (lowVol5m / total5mVol) * 100 : 0;
+
+      // 1h Data
+      const item1h = oneH[id];
+      const avg1h = item1h?.avgHighPrice || "-";
+      const highVol1h = item1h?.highPriceVolume || 0;
+      const lowVol1h = item1h?.lowPriceVolume || 0;
+      const total1hVol = highVol1h + lowVol1h;
+      const buyPressure1h = total1hVol > 0 ? (highVol1h / total1hVol) * 100 : 0;
+      const sellPressure1h = total1hVol > 0 ? (lowVol1h / total1hVol) * 100 : 0;
+
+      // Volume Ratio
+      const volRatio = total1hVol > 0 ? (total5mVol / total1hVol) : 0;
+
       // Get high alch value from mapping data and calculate margin
       const alchValue = item.highalch || null;
       const alchMargin = alchValue !== null ? alchValue - low : null;
@@ -79,6 +111,13 @@ async function fetchData() {
         limit,
         alchValue,
         alchMargin: alchMargin !== null ? Math.round(alchMargin) : null,
+        total5mVol,
+        buyPressure5m,
+        sellPressure5m,
+        total1hVol,
+        buyPressure1h,
+        sellPressure1h,
+        volRatio,
       });
     }
 
@@ -87,7 +126,7 @@ async function fetchData() {
   } catch (err) {
     console.error(err);
     tableBody.innerHTML =
-      "<tr><td colspan='11'>Error fetching data. Try again later.</td></tr>";
+      "<tr><td colspan='19'>Error fetching data. Try again later.</td></tr>";
   }
 }
 
@@ -99,6 +138,7 @@ function getItemImageUrl(name) {
 function renderTable() {
   const f2pOnly = f2pFilterCheckbox.checked;
   const showAll = showAllCheckbox.checked;
+  const buyUnder5m = buyUnder5mCheckbox.checked;
   const minVolume = minVolumeInput.value.trim() ? parseInt(minVolumeInput.value) : null;
   const minBuyPrice = minBuyPriceInput.value.trim() ? parseInt(minBuyPriceInput.value) : null;
   const maxBuyPrice = maxBuyPriceInput.value.trim() ? parseInt(maxBuyPriceInput.value) : null;
@@ -107,6 +147,12 @@ function renderTable() {
   const minProfit = minProfitInput.value.trim() ? parseInt(minProfitInput.value) : null;
   const minRoi = minRoiInput.value.trim() ? parseFloat(minRoiInput.value) : null;
   const limitFilter = limitFilterInput.value.trim() ? parseInt(limitFilterInput.value) : null;
+  const min5mVol = min5mVolInput.value.trim() ? parseInt(min5mVolInput.value) : null;
+  const minBuyPressure5m = minBuyPressure5mInput.value.trim() ? parseFloat(minBuyPressure5mInput.value) : null;
+  const minSellPressure5m = minSellPressure5mInput.value.trim() ? parseFloat(minSellPressure5mInput.value) : null;
+  const min1hVol = min1hVolInput.value.trim() ? parseInt(min1hVolInput.value) : null;
+  const minBuyPressure1h = minBuyPressure1hInput.value.trim() ? parseFloat(minBuyPressure1hInput.value) : null;
+  const minSellPressure1h = minSellPressure1hInput.value.trim() ? parseFloat(minSellPressure1hInput.value) : null;
   const searchQuery = searchBar.value.trim().toLowerCase();
 
   let items = allItems
@@ -119,6 +165,13 @@ function renderTable() {
     .filter((i) => minProfit === null || i.profit >= minProfit)
     .filter((i) => minRoi === null || i.roi >= minRoi)
     .filter((i) => limitFilter === null || (i.limit !== undefined && i.limit >= limitFilter))
+    .filter((i) => !buyUnder5m || (typeof i.avg5m === "number" && i.low < i.avg5m))
+    .filter((i) => min5mVol === null || i.total5mVol >= min5mVol)
+    .filter((i) => minBuyPressure5m === null || i.buyPressure5m >= minBuyPressure5m)
+    .filter((i) => minSellPressure5m === null || i.sellPressure5m >= minSellPressure5m)
+    .filter((i) => min1hVol === null || i.total1hVol >= min1hVol)
+    .filter((i) => minBuyPressure1h === null || i.buyPressure1h >= minBuyPressure1h)
+    .filter((i) => minSellPressure1h === null || i.sellPressure1h >= minSellPressure1h)
     .filter((i) => !searchQuery || i.name.toLowerCase().includes(searchQuery));
 
   const { key, direction } = currentSort;
@@ -138,14 +191,20 @@ function renderTable() {
     const row = document.createElement("tr");
     const profitClass = item.profit >= 0 ? "value-positive" : "value-negative";
     const alchValueDisplay = item.alchValue !== null ? item.alchValue.toLocaleString() : "-";
-    const alchMarginDisplay = item.alchMargin !== null 
+    const alchMarginDisplay = item.alchMargin !== null
       ? `<span class="${item.alchMargin >= 0 ? 'value-positive' : 'value-negative'}">${item.alchMargin.toLocaleString()}</span>`
       : "-";
-    
+
     row.innerHTML = `
       <td>
-        <img class="item-icon" src="${getItemImageUrl(item.name)}" onerror="this.style.display='none'" />
-        ${item.name}
+        <a href="item.html?id=${item.id}" target="_blank" style="display: flex; align-items: center; justify-content: center; color: inherit; text-decoration: none;">
+          <img class="item-icon" src="${getItemImageUrl(item.name)}" onerror="this.style.display='none'" />
+        </a>
+      </td>
+      <td>
+        <a href="item.html?id=${item.id}" target="_blank" style="color: inherit; text-decoration: none;">
+          ${item.name}
+        </a>
       </td>
       <td>${item.low.toLocaleString()}</td>
       <td>${item.high.toLocaleString()}</td>
@@ -154,7 +213,14 @@ function renderTable() {
       <td>${item.roi}%</td>
       <td>${item.volume.toLocaleString()}</td>
       <td>${typeof item.avg5m === "number" ? item.avg5m.toLocaleString() : "-"}</td>
+      <td>${item.total5mVol.toLocaleString()}</td>
       <td>${typeof item.avg1h === "number" ? item.avg1h.toLocaleString() : "-"}</td>
+      <td>${item.total1hVol.toLocaleString()}</td>
+      <td>${Math.round(item.buyPressure5m)}%</td>
+      <td>${Math.round(item.sellPressure5m)}%</td>
+      <td>${Math.round(item.buyPressure1h)}%</td>
+      <td>${Math.round(item.sellPressure1h)}%</td>
+      <td>${item.volRatio.toFixed(3)}</td>
       <td>${alchValueDisplay}</td>
       <td>${alchMarginDisplay}</td>
     `;
@@ -163,12 +229,12 @@ function renderTable() {
 
   if (displayItems.length === 0) {
     tableBody.innerHTML =
-      "<tr><td colspan='11'>No items match the current filters.</td></tr>";
+      "<tr><td colspan='19'>No items match the current filters.</td></tr>";
   }
 }
 
 function handleSort(e) {
-  const key = e.target.dataset.sort;
+  const key = e.currentTarget.dataset.sort;
   if (!key) return;
 
   if (currentSort.key === key) {
@@ -179,7 +245,7 @@ function handleSort(e) {
   }
 
   headers.forEach((h) => h.classList.remove("sorted-asc", "sorted-desc"));
-  e.target.classList.add(
+  e.currentTarget.classList.add(
     currentSort.direction === "asc" ? "sorted-asc" : "sorted-desc"
   );
 
@@ -190,6 +256,7 @@ function handleSort(e) {
 refreshBtn.addEventListener("click", fetchData);
 f2pFilterCheckbox.addEventListener("change", renderTable);
 showAllCheckbox.addEventListener("change", renderTable);
+buyUnder5mCheckbox.addEventListener("change", renderTable);
 minVolumeInput.addEventListener("input", renderTable);
 minBuyPriceInput.addEventListener("input", renderTable);
 maxBuyPriceInput.addEventListener("input", renderTable);
@@ -199,6 +266,12 @@ minProfitInput.addEventListener("input", renderTable);
 minRoiInput.addEventListener("input", renderTable);
 limitFilterInput.addEventListener("input", renderTable);
 searchBar.addEventListener("input", renderTable);
+min5mVolInput.addEventListener("input", renderTable);
+minBuyPressure5mInput.addEventListener("input", renderTable);
+minSellPressure5mInput.addEventListener("input", renderTable);
+min1hVolInput.addEventListener("input", renderTable);
+minBuyPressure1hInput.addEventListener("input", renderTable);
+minSellPressure1hInput.addEventListener("input", renderTable);
 headers.forEach((h) => h.addEventListener("click", handleSort));
 
 fetchData();
@@ -225,8 +298,6 @@ tabButtons.forEach((btn) => {
     });
   });
 });
-
-// 🧮 Alchemy Calculator functionality
 const startingCapitalInput = document.querySelector("#starting-capital");
 const itemPriceInput = document.querySelector("#item-price");
 const itemNameInput = document.querySelector("#item-name");
@@ -275,13 +346,13 @@ async function lookupItem() {
       alchValueInput.value = foundItem.alchValue;
       updatePriceFromAlch();
       alert(
-        `Found item: ${foundItem.name}\nAlch value: ${foundItem.alchValue.toLocaleString()} GP\nPrice set to: ${(foundItem.alchValue - 500).toLocaleString()} GP`
+        `Found item: ${foundItem.name} \nAlch value: ${foundItem.alchValue.toLocaleString()} GP\nPrice set to: ${(foundItem.alchValue - 500).toLocaleString()} GP`
       );
     } else {
       // Update item price with current buy price if no alch value found
       itemPriceInput.value = foundItem.low;
       alert(
-        `Found item: ${foundItem.name}\nCurrent buy price: ${foundItem.low.toLocaleString()} GP\nNo alch value available. Please enter the alch value manually.`
+        `Found item: ${foundItem.name} \nCurrent buy price: ${foundItem.low.toLocaleString()} GP\nNo alch value available.Please enter the alch value manually.`
       );
     }
   } else {
@@ -291,7 +362,7 @@ async function lookupItem() {
     );
     if (partialMatch) {
       const use = confirm(
-        `Did you mean "${partialMatch.name}"?\nCurrent buy price: ${partialMatch.low.toLocaleString()} GP`
+        `Did you mean "${partialMatch.name}" ?\nCurrent buy price: ${partialMatch.low.toLocaleString()} GP`
       );
       if (use) {
         itemNameInput.value = partialMatch.name;
@@ -334,9 +405,9 @@ function calculateAlchemyTrade() {
     // Use specified quantity, but check if capital is sufficient
     const maxQuantity = Math.floor(startingCapital / itemPrice);
     quantity = Math.min(inputQuantity, maxQuantity);
-    
+
     if (inputQuantity > maxQuantity) {
-      alert(`Warning: Insufficient capital for ${inputQuantity.toLocaleString()} items. Using maximum quantity of ${quantity.toLocaleString()}.`);
+      alert(`Warning: Insufficient capital for ${inputQuantity.toLocaleString()} items.Using maximum quantity of ${quantity.toLocaleString()}.`);
     }
   } else {
     // Calculate quantity normally from capital
@@ -378,7 +449,7 @@ function calculateAlchemyTrade() {
   const logEntry = document.createElement("div");
   logEntry.className = "log-entry";
   logEntry.innerHTML = `
-    <p><strong>Trade #${tradeLog.children.length + 1}</strong></p>
+  < p > <strong>Trade #${tradeLog.children.length + 1}</strong></p >
     <p>Starting Capital: ${startingCapital.toLocaleString()} GP</p>
     <p>Item Price: ${itemPrice.toLocaleString()} GP</p>
     <p>Alch Value: ${alchValue.toLocaleString()} GP</p>
@@ -465,15 +536,15 @@ function parsePotionName(name) {
 // Group potions by base name
 function groupPotionsByBase(items) {
   const potionGroups = {};
-  
+
   for (const item of items) {
     const parsed = parsePotionName(item.name);
     if (!parsed || parsed.dose < 1 || parsed.dose > 4) continue;
-    
+
     if (!potionGroups[parsed.baseName]) {
       potionGroups[parsed.baseName] = {};
     }
-    
+
     potionGroups[parsed.baseName][parsed.dose] = {
       id: item.id,
       name: item.name,
@@ -483,7 +554,7 @@ function groupPotionsByBase(items) {
       dose: parsed.dose
     };
   }
-  
+
   // Only return groups that have a 4-dose potion
   const validGroups = {};
   for (const [baseName, doses] of Object.entries(potionGroups)) {
@@ -491,7 +562,7 @@ function groupPotionsByBase(items) {
       validGroups[baseName] = doses;
     }
   }
-  
+
   return validGroups;
 }
 
@@ -500,21 +571,21 @@ function groupPotionsByBase(items) {
 // Empty vials are counted (they have value)
 function calculateDecantProfit(lowerDose, higherDose, numLowerDose) {
   if (!lowerDose || !higherDose) return null;
-  
+
   // Calculate how many 4-dose potions we get based on total doses
   // 12 (1)'s = 12 doses → 3 (4)'s
   // 6 (2)'s = 12 doses → 3 (4)'s  
   // 4 (3)'s = 12 doses → 3 (4)'s
   const totalDoses = numLowerDose * lowerDose.dose;
   const numHigherDose = Math.floor(totalDoses / 4);
-  
+
   if (numHigherDose === 0) return null;
-  
+
   // Calculate costs and revenue
   const buyCost = lowerDose.low * numLowerDose;
   const sellRevenue = higherDose.high * 0.98 * numHigherDose; // 2% GE tax
   const profit = sellRevenue - buyCost;
-  
+
   return {
     profit: Math.round(profit),
     profitPerDecant: Math.round(profit / numHigherDose),
@@ -525,27 +596,27 @@ function calculateDecantProfit(lowerDose, higherDose, numLowerDose) {
 
 async function fetchDecantData() {
   decantTableBody.innerHTML = "<tr><td colspan='19'>Loading data...</td></tr>";
-  
+
   try {
     const [latestRes, mappingRes, volumesRes] = await Promise.all([
       fetch(API_LATEST),
       fetch(API_MAPPING),
       fetch(API_VOLUMES),
     ]);
-    
+
     const latest = (await latestRes.json()).data;
     const mapping = await mappingRes.json();
     const volumes = (await volumesRes.json()).data;
-    
+
     // Build items list with prices and volumes
     const items = [];
     for (const item of mapping) {
       const id = item.id;
       const price = latest[id];
       const volume = volumes[id];
-      
+
       if (!price || !price.high || !price.low || !volume) continue;
-      
+
       items.push({
         id,
         name: item.name,
@@ -554,29 +625,29 @@ async function fetchDecantData() {
         volume: volume
       });
     }
-    
+
     // Group potions by base name
     const potionGroups = groupPotionsByBase(items);
-    
+
     // Calculate decanting data for each potion
     const decantResults = [];
-    
+
     for (const [baseName, doses] of Object.entries(potionGroups)) {
       const dose4 = doses[4];
       if (!dose4) continue;
-      
+
       // Calculate cost per charge for all doses
       const costPerCharge1 = doses[1] ? Math.round(doses[1].low / 1) : null;
       const costPerCharge2 = doses[2] ? Math.round(doses[2].low / 2) : null;
       const costPerCharge3 = doses[3] ? Math.round(doses[3].low / 3) : null;
       const costPerCharge4 = Math.round(dose4.low / 4);
-      
+
       // Calculate profits for different decanting scenarios
       // Using standard quantities from wiki: 12 (1)'s, 6 (2)'s, 4 (3)'s → 3 (4)'s
       const profit1to4 = calculateDecantProfit(doses[1], dose4, 12);
       const profit2to4 = calculateDecantProfit(doses[2], dose4, 6);
       const profit3to4 = calculateDecantProfit(doses[3], dose4, 4);
-      
+
       decantResults.push({
         name: baseName,
         volume1: doses[1]?.volume || null,
@@ -595,6 +666,7 @@ async function fetchDecantData() {
         costPerCharge2,
         costPerCharge3,
         costPerCharge4,
+        costPerCharge4,
         profit1to4: profit1to4?.profit || null,
         profit2to4: profit2to4?.profit || null,
         profit3to4: profit3to4?.profit || null,
@@ -603,7 +675,7 @@ async function fetchDecantData() {
         profitPerDecant3: profit3to4?.profitPerDecant || null,
       });
     }
-    
+
     allDecantData = decantResults;
     renderDecantTable();
   } catch (err) {
@@ -615,22 +687,22 @@ async function fetchDecantData() {
 function renderDecantTable() {
   const minVolume = decantMinVolumeInput.value.trim() ? parseInt(decantMinVolumeInput.value) : null;
   const searchQuery = decantSearchBar.value.trim().toLowerCase();
-  
+
   let potions = allDecantData
     .filter((p) => minVolume === null || p.volume4 >= minVolume)
     .filter((p) => !searchQuery || p.name.toLowerCase().includes(searchQuery));
-  
+
   // Sort
   const { key, direction } = decantCurrentSort;
   potions.sort((a, b) => {
     const aVal = a[key];
     const bVal = b[key];
-    
+
     // Handle null values
     if (aVal === null && bVal === null) return 0;
     if (aVal === null) return 1;
     if (bVal === null) return -1;
-    
+
     if (typeof aVal === "string") {
       return direction === "asc"
         ? aVal.localeCompare(bVal)
@@ -638,23 +710,23 @@ function renderDecantTable() {
     }
     return direction === "asc" ? aVal - bVal : bVal - aVal;
   });
-  
+
   decantTableBody.innerHTML = "";
-  
+
   for (const potion of potions) {
     const row = document.createElement("tr");
-    
+
     const formatValue = (val) => {
       if (val === null) return "-";
       return val.toLocaleString();
     };
-    
+
     const formatProfit = (val) => {
       if (val === null) return "-";
       const profitClass = val >= 0 ? "value-positive" : "value-negative";
       return `<span class="${profitClass}">${val.toLocaleString()}</span>`;
     };
-    
+
     row.innerHTML = `
       <td>
         <img class="item-icon" src="${getItemImageUrl(potion.name + " (4)")}" onerror="this.style.display='none'" />
@@ -681,28 +753,28 @@ function renderDecantTable() {
     `;
     decantTableBody.appendChild(row);
   }
-  
+
   if (potions.length === 0) {
     decantTableBody.innerHTML = "<tr><td colspan='19'>No potions match the current filters.</td></tr>";
   }
 }
 
 function handleDecantSort(e) {
-  const key = e.target.dataset.sort;
+  const key = e.currentTarget.dataset.sort;
   if (!key) return;
-  
+
   if (decantCurrentSort.key === key) {
     decantCurrentSort.direction = decantCurrentSort.direction === "asc" ? "desc" : "asc";
   } else {
     decantCurrentSort.key = key;
     decantCurrentSort.direction = "desc";
   }
-  
+
   decantHeaders.forEach((h) => h.classList.remove("sorted-asc", "sorted-desc"));
-  e.target.classList.add(
+  e.currentTarget.classList.add(
     decantCurrentSort.direction === "asc" ? "sorted-asc" : "sorted-desc"
   );
-  
+
   renderDecantTable();
 }
 
