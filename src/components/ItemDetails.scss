@@ -1,0 +1,153 @@
+@use '../styles/variables' as *;
+
+.item-details-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: #d8ccb4;
+    padding: 2em;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    text-align: left;
+}
+
+.item-header {
+    display: flex;
+    align-items: center;
+    gap: 1em;
+    margin-bottom: 1em;
+    border-bottom: 2px solid $color-border;
+    padding-bottom: 1em;
+
+    img {
+        width: 64px;
+        height: 64px;
+    }
+}
+
+.item-title {
+    flex: 1;
+
+    h2 {
+        margin: 0;
+        color: $color-accent;
+        font-size: 2em;
+    }
+}
+
+.item-id {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.item-badges {
+    display: flex;
+    gap: 0.5em;
+}
+
+.badge {
+    padding: 0.3em 0.8em;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+    color: white;
+
+    &.members {
+        background: #d9534f;
+    }
+
+    &.f2p {
+        background: #5bc0de;
+    }
+}
+
+.item-examine {
+    font-style: italic;
+    color: #555;
+    margin-bottom: 2em;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5em;
+    margin-bottom: 2em;
+}
+
+.stat-card {
+    background: $color-input-bg;
+    padding: 1.5em;
+    border-radius: 8px;
+    border: 1px solid $color-border;
+    display: flex;
+    align-items: center;
+    gap: 1em;
+}
+
+.stat-icon {
+    font-size: 2em;
+}
+
+.stat-content h3 {
+    margin: 0 0 0.5em 0;
+    font-size: 1em;
+    color: #666;
+}
+
+.price-large {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin: 0;
+}
+
+.price-medium {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin: 0;
+}
+
+.sub-text {
+    font-size: 0.8em;
+    color: #666;
+    margin: 0.2em 0 0 0;
+}
+
+.highlight {
+    color: $color-accent;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1em;
+    background: $color-panel-bg;
+    padding: 1.5em;
+    border-radius: 8px;
+    margin-bottom: 2em;
+}
+
+.detail-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2em;
+
+    span:first-child {
+        font-size: 0.9em;
+        color: #666;
+        font-weight: bold;
+    }
+
+    span:last-child {
+        font-size: 1.1em;
+    }
+}
+
+@media (max-width: 768px) {
+    .item-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}

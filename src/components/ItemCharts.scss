@@ -1,0 +1,49 @@
+@use '../styles/variables' as *;
+
+.charts-section {
+    margin-top: 2em;
+}
+
+.chart-controls {
+    display: flex;
+    justify-content: center;
+    gap: 0.5em;
+    margin-bottom: 1em;
+}
+
+.time-btn {
+    background: $color-button-bg;
+    color: #000;
+    border: 1px solid $color-border;
+    padding: 0.5em 1em;
+    cursor: pointer;
+    border-radius: 4px;
+
+    &.active {
+        background: $color-accent;
+        color: $color-white;
+        border-color: $color-accent;
+    }
+}
+
+.chart-container {
+    background: $color-input-bg;
+    padding: 1em;
+    border-radius: 8px;
+    border: 1px solid $color-border;
+    margin-bottom: 2em;
+    height: 400px;
+
+    h3 {
+        margin: 0 0 0.5em 0;
+        color: $color-accent;
+        text-align: center;
+    }
+}
+
+.chart-subtitle {
+    text-align: center;
+    font-size: 0.8em;
+    color: #666;
+    margin-bottom: 1em;
+}

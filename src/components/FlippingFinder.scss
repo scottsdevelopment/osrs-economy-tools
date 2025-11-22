@@ -1,0 +1,139 @@
+@use '../styles/variables' as *;
+
+.controls {
+    margin: 1em auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5em;
+    max-width: 1200px;
+    padding: 0 1em;
+}
+
+.filter-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1em;
+    flex-wrap: wrap;
+
+    input[type="text"] {
+        padding: 0.6em;
+        min-width: 300px;
+        border: 1px solid #7d6e58;
+        border-radius: 4px;
+        background: #f0ebd8;
+        color: $color-text;
+        font-size: 1em;
+        font-family: $font-main;
+        transition: border-color 0.2s, box-shadow 0.2s;
+
+        &:focus {
+            outline: none;
+            border-color: $color-primary;
+            box-shadow: 0 0 0 3px rgba(90, 56, 32, 0.15);
+        }
+    }
+}
+
+.filter-group {
+    border: 1px solid $color-border;
+    border-radius: 8px;
+    padding: 1em;
+    background: $color-panel-bg;
+    margin: 0;
+    min-width: 0;
+
+    &.full-width {
+        grid-column: 1 / -1;
+        background: transparent;
+        border: none;
+        padding: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1em;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    legend {
+        background: $color-accent;
+        color: $color-white;
+        padding: 0.2em 0.8em;
+        border-radius: 4px;
+        font-size: 0.9em;
+        font-weight: bold;
+    }
+}
+
+.input-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1em;
+
+    label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3em;
+        font-size: 0.85em;
+        text-align: left;
+    }
+
+    .checkbox-label {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5em;
+    }
+
+    input {
+        width: 100%;
+        padding: 0.5em;
+        border: 1px solid $color-border;
+        border-radius: 4px;
+        background: $color-input-bg;
+        box-sizing: border-box;
+
+        &:focus {
+            outline: none;
+            border-color: $color-accent;
+            box-shadow: 0 0 0 2px rgba(147, 96, 57, 0.2);
+        }
+    }
+}
+
+.search-container {
+    display: flex;
+    gap: 0.5em;
+    flex: 1;
+    min-width: 300px;
+
+    input {
+        flex: 1;
+        padding: 0.6em;
+        border: 1px solid $color-border;
+        border-radius: 4px;
+        background: $color-input-bg;
+    }
+}
+
+.checkbox-container {
+    display: flex;
+    gap: 1.5em;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    cursor: pointer;
+    font-size: 0.9em;
+    user-select: none;
+
+    input[type="checkbox"] {
+        width: 1.2em;
+        height: 1.2em;
+        accent-color: $color-accent;
+        cursor: pointer;
+    }
+}

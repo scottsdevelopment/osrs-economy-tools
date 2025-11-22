@@ -1,0 +1,78 @@
+@use '../styles/variables' as *;
+
+table {
+    margin: 1.5em auto;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 95%;
+    max-width: 1000px;
+    background: #e8dec7;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid $color-border;
+}
+
+th,
+td {
+    padding: 0.8em 1em;
+    border-bottom: 1px solid #c9bca0;
+    text-align: left;
+}
+
+th {
+    background: $color-button-bg;
+    color: #2c1e12;
+    font-family: $font-header;
+    font-weight: 700;
+    cursor: pointer;
+    position: relative;
+    border-bottom: 2px solid $color-border;
+    transition: background 0.2s;
+
+    &:hover {
+        background: #c5b090;
+    }
+
+    &[colspan] {
+        cursor: default;
+
+        &:hover {
+            background: $color-button-bg;
+        }
+    }
+
+    .sort-icon {
+        display: inline-block;
+        width: 0;
+        height: 0;
+        margin-left: 8px;
+        vertical-align: middle;
+        border: 5px solid transparent;
+    }
+
+    &.sorted-asc .sort-icon {
+        border-bottom-color: #000;
+        margin-bottom: 2px;
+    }
+
+    &.sorted-desc .sort-icon {
+        border-top-color: #000;
+        margin-top: 2px;
+    }
+}
+
+tr:nth-child(even) {
+    background: #dfd5c1;
+}
+
+tr:hover {
+    background: #f0e6d2;
+}
+
+img.item-icon {
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+    margin-right: 8px;
+}
