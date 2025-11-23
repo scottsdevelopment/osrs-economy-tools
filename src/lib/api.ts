@@ -77,7 +77,9 @@ export async function fetchFlippingData(): Promise<ProcessedItem[]> {
             if (!price || !price.high || !price.low || !volume) continue;
 
             const low = price.low;
+            const lowTime = price.lowTime;
             const high = price.high;
+            const highTime = price.highTime;
 
             // 5m Data
             const item5m = fiveM[id];
@@ -99,7 +101,9 @@ export async function fetchFlippingData(): Promise<ProcessedItem[]> {
                 limit: limit !== undefined ? limit : "-",
                 highalch: item.highalch || null,
                 low,
+                lowTime,
                 high,
+                highTime,
                 volume,
                 avg5m,
                 highVol5m,

@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState, memo } from "react";
+import React, { useState, memo, useEffect } from "react";
 import Link from "next/link";
 import { ProcessedItem } from "@/lib/types";
 import { getItemImageUrl } from "@/lib/api";
 import { ImageOff } from "lucide-react";
 import { CustomColumn } from "@/lib/columns/types";
 import { evaluateColumn, formatColumnValue } from "@/lib/columns/engine";
+import { TimeseriesCache } from "@/lib/timeseries/cache";
+import { Spinner } from "./Spinner";
 
 interface ItemImageProps {
     name: string;
@@ -39,12 +41,68 @@ ItemImage.displayName = "ItemImage";
 export interface TableRowProps {
     item: ProcessedItem;
     columns: CustomColumn[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    rawData?: any;
+    cache?: TimeseriesCache;
 }
 
-const TableRow = memo(({ item, columns, rawData }: TableRowProps) => {
-    const enabledColumns = columns.filter(c => c.enabled);
+const TableRow = memo(({ item, columns, cache }: TableRowProps) => {
+    const enabledColumns = React.useMemo(() => columns.filter(c => c.enabled), [columns]);
+    const [loadingColumns, setLoadingColumns] = useState<Set<string>>(new Set());
+    const [updateTrigger, setUpdateTrigger] = useState(0);
+
+    // Subscribe to this item's timeseries updates
+    useEffect(() => {
+        if (!cache) return;
+
+        return cache.subscribeToItem(item.id, (interval, data) => {
+            // When data for this item arrives, trigger re-evaluation
+            const affectedCols = columns.filter(col =>
+                col.expression.includes(`timeseries(item.id, '${interval}')`)
+            );
+
+            if (affectedCols.length > 0) {
+                // Remove loading state for affected columns
+                setLoadingColumns(prev => {
+                    const next = new Set(prev);
+                    affectedCols.forEach(col => next.delete(col.id));
+                    return next;
+                });
+
+                // Trigger re-render
+                setUpdateTrigger(prev => prev + 1);
+            }
+        });
+    }, [item.id, cache, columns]);
+
+    // Check which columns are loading on mount and when columns change
+    useEffect(() => {
+        if (!cache) return;
+
+        const checkLoading = async () => {
+            const timeseriesCols = enabledColumns.filter(c =>
+                c.expression.includes('timeseries(')
+            );
+
+            const loading = new Set<string>();
+
+            for (const col of timeseriesCols) {
+                // Extract interval from expression
+                const match = col.expression.match(/timeseries\([^,]+,\s*['"]([^'"]+)['"]/);
+                if (match) {
+                    const interval = match[1];
+                    const data = await cache.get(item.id, interval);
+
+                    if (data === null) {
+                        // Mark as loading - pre-fetch from FlippingTable will request it
+                        loading.add(col.id);
+                    }
+                }
+            }
+
+            setLoadingColumns(loading);
+        };
+
+        checkLoading();
+    }, [item.id, cache, enabledColumns]);
 
     return (
         <tr className="even:bg-[#dfd5c1] hover:bg-[#f0e6d2] transition-colors">
@@ -60,8 +118,9 @@ const TableRow = memo(({ item, columns, rawData }: TableRowProps) => {
             </td>
 
             {enabledColumns.map((col) => {
-                const value = evaluateColumn(col, { item, rawData }, columns);
+                const value = evaluateColumn(col, { item, cache }, columns, cache);
                 const formatted = formatColumnValue(value, col);
+                const isLoading = loadingColumns.has(col.id) && value === null;
 
                 if (col.id === "name") {
                     return (
@@ -82,20 +141,25 @@ const TableRow = memo(({ item, columns, rawData }: TableRowProps) => {
                     const colorClass = numVal >= 0 ? "text-green-700 font-bold" : "text-red-700 font-bold";
                     return (
                         <td key={col.id} className="p-3 border-b border-[#c9bca0]">
-                            <span className={colorClass}>{formatted}</span>
+                            {isLoading ? (
+                                <Spinner size="sm" />
+                            ) : (
+                                <span className={colorClass}>{formatted}</span>
+                            )}
                         </td>
                     );
                 }
 
                 return (
                     <td key={col.id} className="p-3 border-b border-[#c9bca0]">
-                        {formatted}
+                        {isLoading ? <Spinner size="sm" /> : formatted}
                     </td>
                 );
             })}
         </tr>
     );
 }, (prevProps, nextProps) => {
+    // Only re-render if item ID changes or columns change
     if (prevProps.item.id !== nextProps.item.id) return false;
 
     const prevEnabled = prevProps.columns.filter(c => c.enabled).map(c => c.id).join(",");
@@ -103,7 +167,7 @@ const TableRow = memo(({ item, columns, rawData }: TableRowProps) => {
     if (prevEnabled !== nextEnabled) return false;
 
     if (prevProps.item !== nextProps.item) return false;
-    if (prevProps.rawData !== nextProps.rawData) return false;
+    if (prevProps.cache !== nextProps.cache) return false;
 
     return true;
 });

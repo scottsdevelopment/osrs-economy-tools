@@ -36,7 +36,9 @@ export interface ProcessedItem {
 
     // Latest price data
     low: number;
+    lowTime: number;
     high: number;
+    highTime: number;
 
     // Volume data
     volume: number; // 24h volume

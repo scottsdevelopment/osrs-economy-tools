@@ -1,29 +1,48 @@
 import { Parser } from "expr-eval";
 import { CustomColumn, ColumnContext } from "./types";
+import { TimeseriesCache } from "../timeseries/cache";
 
 const parser = new Parser();
 // Cache parsed expressions to avoid re-parsing for every item
-// Key: expression string, Value: Parsed Expression
 const expressionCache = new Map<string, any>();
 
-// Register custom functions
-parser.functions.sma = (data: any[], period: number) => {
-    if (!Array.isArray(data) || data.length < period) return 0;
-    // Assuming data is sorted by time descending (newest first) or we need to handle it.
-    // For OSRS timeseries, usually it's array of objects. We need to know the structure.
-    // Let's assume data is array of { avgHighPrice, avgLowPrice, ... } or just numbers if pre-processed.
-    // For now, let's assume it's passed as an array of numbers (prices).
-
-    // If it's an array of objects, we might need a path.
-    // Let's keep it simple: sma(arrayOfNumbers, period)
-
-    const slice = data.slice(0, period);
-    const sum = slice.reduce((a, b) => a + b, 0);
-    return sum / period;
+// Array utility functions for building custom indicators
+parser.functions.slice = (arr: any[], start: number, end?: number) => {
+    if (!Array.isArray(arr)) return [];
+    return arr.slice(start, end);
 };
 
-// Helper to safely evaluate
-export function evaluateColumn(column: CustomColumn, context: ColumnContext, allColumns: CustomColumn[] = [], depth = 0): any {
+parser.functions.sum = (arr: any[]) => {
+    if (!Array.isArray(arr)) return 0;
+    return arr.reduce((a, b) => a + (Number(b) || 0), 0);
+};
+
+parser.functions.avg = (arr: any[]) => {
+    if (!Array.isArray(arr) || arr.length === 0) return null;
+    const values = arr.filter(v => v !== null && v !== undefined);
+    if (values.length === 0) return null;
+    return parser.functions.sum(values) / values.length;
+};
+
+parser.functions.length = (arr: any[]) => {
+    if (!Array.isArray(arr)) return 0;
+    return arr.length;
+};
+
+parser.functions.field = (arr: any[], fieldName: string) => {
+    if (!Array.isArray(arr)) return [];
+    return arr.map(item => item?.[fieldName]).filter(v => v !== null && v !== undefined);
+};
+
+// Helper to safely evaluate with async timeseries support
+export function evaluateColumn(
+    column: CustomColumn,
+    context: ColumnContext,
+    allColumns: CustomColumn[] = [],
+    cache?: TimeseriesCache,
+    onUpdate?: () => void,
+    depth = 0
+): any {
     if (depth > 10) {
         console.warn(`Circular dependency detected for column ${column.name}`);
         return null;
@@ -42,15 +61,26 @@ export function evaluateColumn(column: CustomColumn, context: ColumnContext, all
                 if (typeof prop === "string") {
                     const depCol = allColumns.find(c => c.id === prop);
                     if (depCol) {
-                        return evaluateColumn(depCol, context, allColumns, depth + 1);
+                        return evaluateColumn(depCol, context, allColumns, cache, onUpdate, depth + 1);
                     }
                 }
                 return undefined;
             }
         });
 
-        // Extend context with columns proxy
-        const evalContext = { ...context, columns: columnsProxy };
+        // Register timeseries function - SYNC ONLY (checks memory cache)
+        const timeseriesFunc = (itemId: number, interval: string) => {
+            if (!cache) return null;
+            return cache.getSync(itemId, interval);
+        };
+
+        // Extend context with columns proxy and timeseries function
+        const evalContext = {
+            ...context,
+            columns: columnsProxy,
+            timeseries: timeseriesFunc,
+            now: Math.floor(Date.now() / 1000)
+        };
 
         return expr.evaluate(evalContext);
     } catch (error) {
@@ -82,6 +112,14 @@ export function formatColumnValue(value: any, column: CustomColumn): string {
                 return `${num.toFixed(2)}%`;
             case "decimal":
                 return num.toFixed(2);
+            case "relativeTime": {
+                const now = Math.floor(Date.now() / 1000);
+                const diff = now - num;
+                if (diff < 60) return `${diff}s ago`;
+                if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+                if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+                return `${Math.floor(diff / 86400)}d ago`;
+            }
             default:
                 return num.toLocaleString();
         }

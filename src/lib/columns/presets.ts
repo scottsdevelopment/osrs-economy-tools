@@ -41,6 +41,46 @@ export const PRESET_COLUMNS: CustomColumn[] = [
         group: "Core",
         description: "Grand Exchange buy limit every 4 hours"
     },
+    {
+        id: "highTime",
+        name: "High Time",
+        expression: "item.highTime",
+        type: "number",
+        format: "relativeTime",
+        enabled: false,
+        group: "Core",
+        description: "Time of the latest high price update"
+    },
+    {
+        id: "lowTime",
+        name: "Low Time",
+        expression: "item.lowTime",
+        type: "number",
+        format: "relativeTime",
+        enabled: false,
+        group: "Core",
+        description: "Time of the latest low price update"
+    },
+    {
+        id: "highTimeDelta",
+        name: "High Time Delta",
+        expression: "now - item.highTime",
+        type: "number",
+        format: "decimal",
+        enabled: false,
+        group: "Core",
+        description: "Seconds since last high price update"
+    },
+    {
+        id: "lowTimeDelta",
+        name: "Low Time Delta",
+        expression: "now - item.lowTime",
+        type: "number",
+        format: "decimal",
+        enabled: false,
+        group: "Core",
+        description: "Seconds since last low price update"
+    },
 
     // Calculated Columns - Profit & ROI
     {
@@ -184,7 +224,7 @@ export const PRESET_COLUMNS: CustomColumn[] = [
     {
         id: "alchMargin",
         name: "Alch Margin",
-        expression: "item.highalch !== null ? round(item.highalch - item.low) : null",
+        expression: "item.highalch > 0 ? round(item.highalch - item.low) : 0",
         type: "number",
         format: "currency",
         enabled: false,
@@ -192,15 +232,49 @@ export const PRESET_COLUMNS: CustomColumn[] = [
         description: "Profit from high alching after buying at current price"
     },
 
-    // Technical Indicators
-    {
-        id: "sma7",
-        name: "SMA(7)",
-        expression: "sma(rawData.timeseries, 7)",
-        type: "number",
-        format: "currency",
-        enabled: false,
-        group: "Technical",
-        description: "7-period Simple Moving Average"
-    }
+    // Technical Indicators - Using utility functions
+    // {
+    //     id: "sma7_high",
+    //     name: "SMA(7) High",
+    //     expression: "round(avg(slice(field(timeseries(item.id, '24h'), 'avgHighPrice'), 0, 7)))",
+    //     type: "number",
+    //     format: "currency",
+    //     enabled: false,
+    //     isPreset: true,
+    //     group: "Technical",
+    //     description: "7-day Simple Moving Average of high prices"
+    // },
+    // {
+    //     id: "sma7_low",
+    //     name: "SMA(7) Low",
+    //     expression: "round(avg(slice(field(timeseries(item.id, '24h'), 'avgLowPrice'), 0, 7)))",
+    //     type: "number",
+    //     format: "currency",
+    //     enabled: false,
+    //     isPreset: true,
+    //     group: "Technical",
+    //     description: "7-day Simple Moving Average of low prices"
+    // },
+    // {
+    //     id: "sma14",
+    //     name: "SMA(14)",
+    //     expression: "round(avg(slice(field(timeseries(item.id, '24h'), 'avgHighPrice'), 0, 14)))",
+    //     type: "number",
+    //     format: "currency",
+    //     enabled: false,
+    //     isPreset: true,
+    //     group: "Technical",
+    //     description: "14-day Simple Moving Average of high prices"
+    // },
+    // {
+    //     id: "price_vs_sma7",
+    //     name: "Price vs SMA(7)",
+    //     expression: "((item.high - avg(slice(field(timeseries(item.id, '24h'), 'avgHighPrice'), 0, 7))) / avg(slice(field(timeseries(item.id, '24h'), 'avgHighPrice'), 0, 7))) * 100",
+    //     type: "number",
+    //     format: "percentage",
+    //     enabled: false,
+    //     isPreset: true,
+    //     group: "Technical",
+    //     description: "Current price percentage difference from 7-day SMA"
+    // }
 ];

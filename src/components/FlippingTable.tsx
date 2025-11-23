@@ -1,17 +1,18 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { ProcessedItem, TimeSeriesData } from "@/lib/types";
+import { ProcessedItem } from "@/lib/types";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import Tooltip from "./Tooltip";
 import Pagination from "./Pagination";
 import CustomColumnManager from "./CustomColumnManager";
 import TableRow from "./TableRow";
 import { CustomColumn } from "@/lib/columns/types";
-import { loadColumns, saveColumns, addColumn, updateColumn, deleteColumn, toggleColumn } from "@/lib/columns/storage";
+import { loadColumns, addColumn, updateColumn, deleteColumn, toggleColumn } from "@/lib/columns/storage";
 import { PRESET_COLUMNS } from "@/lib/columns/presets";
 import { evaluateColumn } from "@/lib/columns/engine";
-import { fetchTimeseriesForSMA } from "@/lib/api";
+import { TimeseriesCache } from "@/lib/timeseries/cache";
+import { useItemData } from "@/context/ItemDataContext";
 
 interface FlippingTableProps {
     items: ProcessedItem[];
@@ -33,13 +34,53 @@ export default function FlippingTable({ items, searchQuery = "", onSearchChange 
     const [sort, setSort] = useState<SortState>({ key: "profit", direction: "desc" });
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGE_SIZE);
-    const [smaData, setSmaData] = useState<Record<number, TimeSeriesData[]>>({});
-    const [loadingSma, setLoadingSma] = useState(false);
+    const [cache] = useState(() => new TimeseriesCache());
+    const [updateTrigger, setUpdateTrigger] = useState(0);
+    const { lastUpdated } = useItemData(); // Hook into refresh mechanism
 
     // Load columns on mount
     useEffect(() => {
         loadColumns().then(setColumns);
     }, []);
+
+    // Subscribe to cache updates
+    useEffect(() => {
+        return cache.subscribe(() => {
+            // Trigger re-render when timeseries data becomes available
+            setUpdateTrigger(prev => prev + 1);
+        });
+    }, [cache]);
+
+    // Pre-fetch timeseries for items with recent activity (from latest endpoint)
+    // This is needed because filters might use calculated column values
+    // Only runs when enabled columns with timeseries change
+    const timeseriesIntervals = useMemo(() => {
+        const intervals = new Set<string>();
+
+        // Only check enabled columns to avoid unnecessary fetches
+        const enabledCols = columns.filter(c => c.enabled);
+        const hasTimeseries = enabledCols.some(col => col.expression.includes('timeseries('));
+
+        if (hasTimeseries) {
+            enabledCols.forEach(col => {
+                const matches = col.expression.matchAll(/timeseries\([^,]+,\s*['"]([^'"]+)['"]/g);
+                for (const match of matches) {
+                    intervals.add(match[1]);
+                }
+            });
+        }
+
+        return Array.from(intervals);
+    }, [columns.filter(c => c.enabled).map(c => c.id + c.expression).join(',')]);
+
+    useEffect(() => {
+        if (timeseriesIntervals.length > 0 && items.length > 0) {
+            // Pre-fetch for items that have recent activity
+            timeseriesIntervals.forEach(interval => {
+                cache.prefetch(items.map(item => item.id), interval, 0);
+            });
+        }
+    }, [timeseriesIntervals, items, cache]);
 
     // Column Management Handlers
     const handleAddColumn = async (col: CustomColumn) => {
@@ -81,8 +122,9 @@ export default function FlippingTable({ items, searchQuery = "", onSearchChange 
             let bVal: any;
 
             if (sortCol) {
-                aVal = evaluateColumn(sortCol, { item: a, rawData: {} }, columns);
-                bVal = evaluateColumn(sortCol, { item: b, rawData: {} }, columns);
+                aVal = evaluateColumn(sortCol, { item: a, cache }, columns, cache);
+                bVal = evaluateColumn(sortCol, { item: b, cache }, columns, cache);
+
             } else {
                 aVal = (a as any)[sort.key];
                 bVal = (b as any)[sort.key];
@@ -104,7 +146,7 @@ export default function FlippingTable({ items, searchQuery = "", onSearchChange 
 
             return 0;
         });
-    }, [items, sort, columns]);
+    }, [items, sort, columns, cache, updateTrigger]);
 
     // Pagination
     const paginatedItems = useMemo(() => {
@@ -123,24 +165,6 @@ export default function FlippingTable({ items, searchQuery = "", onSearchChange 
         setItemsPerPage(newItemsPerPage);
         setCurrentPage(1);
     }, []);
-
-    // Fetch SMA data for visible items if SMA column is enabled
-    useEffect(() => {
-        const smaColumn = columns.find(c => c.id === "sma7" && c.enabled);
-        if (!smaColumn) return;
-
-        const idsToFetch = paginatedItems
-            .map(item => item.id)
-            .filter(id => !smaData[id]); // Only fetch missing
-
-        if (idsToFetch.length === 0) return;
-
-        setLoadingSma(true);
-        fetchTimeseriesForSMA(idsToFetch).then(newData => {
-            setSmaData(prev => ({ ...prev, ...newData }));
-            setLoadingSma(false);
-        });
-    }, [paginatedItems, columns, smaData]);
 
     const SortIcon = ({ columnId }: { columnId: string }) => {
         if (sort.key !== columnId) return null;
@@ -195,11 +219,6 @@ export default function FlippingTable({ items, searchQuery = "", onSearchChange 
                 />
 
                 <div className="overflow-x-auto relative">
-                    {loadingSma && (
-                        <div className="absolute top-0 left-0 w-full h-1 bg-blue-200 overflow-hidden z-10">
-                            <div className="animate-progress w-full h-full bg-blue-500 origin-left-right"></div>
-                        </div>
-                    )}
                     <table className="w-full border-separate border-spacing-0 bg-osrs-panel shadow-lg rounded-lg overflow-hidden border border-osrs-border">
                         <thead>
                             <tr>
@@ -229,7 +248,7 @@ export default function FlippingTable({ items, searchQuery = "", onSearchChange 
                                     key={item.id}
                                     item={item}
                                     columns={columns}
-                                    rawData={{ timeseries: smaData[item.id] }}
+                                    cache={cache}
                                 />
                             ))}
                         </tbody>
