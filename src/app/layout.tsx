@@ -1,22 +1,29 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { ItemDataProvider } from "@/context/ItemDataContext";
+import { FilterProvider } from "@/context/FilterContext";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1.0,
+  themeColor: "#936039",
+};
 
 export const metadata: Metadata = {
-  title: "💰 OSRS Economy Tools - Flipping Finder & Alchemy Calculator",
+  title: "💰 GE Flip - Flipping Finder & Alchemy Calculator",
   description:
     "Free OSRS economy tools including a flipping finder with real-time Grand Exchange prices and an alchemy trade calculator. Find profitable items to flip and calculate high alchemy profits in Old School RuneScape.",
   keywords:
     "OSRS, Old School RuneScape, GE flipping, Grand Exchange, high alchemy calculator, OSRS profit calculator, RuneScape tools, OSRS flipper, GE prices, OSRS economy, flipping guide, alchemy profit calculator",
-  authors: [{ name: "OSRS Economy Tools" }],
+  authors: [{ name: "GE Flip" }],
   openGraph: {
     type: "website",
     url: "https://scottsdevelopment.github.io/osrs-economy-tools/",
-    title: "💰 OSRS Economy Tools - Flipping Finder & Alchemy Calculator",
+    title: "💰 GE Flip - Flipping Finder & Alchemy Calculator",
     description:
       "Free OSRS economy tools including a flipping finder with real-time Grand Exchange prices and an alchemy trade calculator. Find profitable items to flip and calculate high alchemy profits.",
-    siteName: "OSRS Economy Tools",
+    siteName: "GE Flip",
     locale: "en_US",
     images: [
       {
@@ -27,7 +34,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     site: "@scottsdevelopment", // Assuming handle or generic
-    title: "💰 OSRS Economy Tools - Flipping Finder & Alchemy Calculator",
+    title: "💰 GE Flip - Flipping Finder & Alchemy Calculator",
     description:
       "Free OSRS economy tools including a flipping finder with real-time Grand Exchange prices and an alchemy trade calculator. Find profitable items to flip and calculate high alchemy profits.",
     images: ["https://scottsdevelopment.github.io/osrs-economy-tools/banner.png"],
@@ -37,8 +44,6 @@ export const metadata: Metadata = {
     shortcut: "/favico.ico",
     apple: "/favico.ico",
   },
-  viewport: "width=device-width, initial-scale=1.0",
-  themeColor: "#936039",
 };
 
 export default function RootLayout({
@@ -58,10 +63,12 @@ export default function RootLayout({
       </head>
       <body>
         <ItemDataProvider>
-          <Navbar />
-          <main className="p-8">
-            {children}
-          </main>
+          <FilterProvider>
+            <Navbar />
+            <main className="p-8">
+              {children}
+            </main>
+          </FilterProvider>
         </ItemDataProvider>
         <footer>
           <p>
@@ -74,7 +81,6 @@ export default function RootLayout({
               RuneScape Wiki
             </a>
           </p>
-          <p>Built with 💖 using Cursor & Next.js</p>
         </footer>
       </body>
     </html>

@@ -31,8 +31,8 @@ export interface ProcessedItem {
     id: number;
     name: string;
     members: boolean;
-    limit: number | string;
-    highalch: number | null;
+    limit: number;
+    highalch: number;
 
     // Latest price data
     low: number;
@@ -44,12 +44,22 @@ export interface ProcessedItem {
     volume: number; // 24h volume
 
     // 5m data
-    avg5m: number | string;
+    avg5m: number;
     highVol5m: number;
     lowVol5m: number;
 
     // 1h data
-    avg1h: number | string;
+    avg1h: number;
     highVol1h: number;
     lowVol1h: number;
+
+    // 6h data
+    avg6h: number;
+    highVol6h: number;
+    lowVol6h: number;
+
+    // 24h data
+    avg24h: number;
+    highVol24h: number;
+    lowVol24h: number;
 }

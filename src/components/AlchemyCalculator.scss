@@ -167,11 +167,11 @@
 }
 
 .value-positive {
-    color: #014cc0;
+    color: var(--color-osrs-profit);
 }
 
 .value-negative {
-    color: #c02614;
+    color: var(--color-osrs-loss);
 }
 
 @media (max-width: 768px) {

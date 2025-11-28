@@ -9,6 +9,9 @@ import { CustomColumn } from "@/lib/columns/types";
 import { evaluateColumn, formatColumnValue } from "@/lib/columns/engine";
 import { TimeseriesCache } from "@/lib/timeseries/cache";
 import { Spinner } from "./Spinner";
+import { NON_MEMBER_ICON, MEMBER_ICON } from "@/lib/constants/icons";
+import { useFavorites } from "@/context/FavoritesContext";
+import { Heart } from "lucide-react";
 
 interface ItemImageProps {
     name: string;
@@ -42,12 +45,15 @@ export interface TableRowProps {
     item: ProcessedItem;
     columns: CustomColumn[];
     cache?: TimeseriesCache;
+    action?: string;
+    showActionColumn?: boolean;
 }
 
-const TableRow = memo(({ item, columns, cache }: TableRowProps) => {
+const TableRow = memo(({ item, columns, cache, action, showActionColumn }: TableRowProps) => {
     const enabledColumns = React.useMemo(() => columns.filter(c => c.enabled), [columns]);
     const [loadingColumns, setLoadingColumns] = useState<Set<string>>(new Set());
     const [updateTrigger, setUpdateTrigger] = useState(0);
+    const { isFavorite, toggleFavorite } = useFavorites();
 
     // Subscribe to this item's timeseries updates
     useEffect(() => {
@@ -106,16 +112,17 @@ const TableRow = memo(({ item, columns, cache }: TableRowProps) => {
 
     return (
         <tr className="even:bg-[#dfd5c1] hover:bg-[#f0e6d2] transition-colors">
-            {/* Fixed Image Column */}
-            <td className="p-3 border-b border-[#c9bca0]">
-                <Link
-                    href={`/item/${item.id}`}
-                    target="_blank"
-                    className="w-6 h-6 flex items-center justify-center text-inherit no-underline"
-                >
-                    <ItemImage name={item.name} />
-                </Link>
-            </td>
+
+
+            {showActionColumn && (
+                <td className="p-3 border-b border-[#c9bca0]">
+                    {action && (
+                        <span className="inline-block px-2 py-1 text-xs font-bold text-white bg-osrs-accent rounded shadow-sm">
+                            {action}
+                        </span>
+                    )}
+                </td>
+            )}
 
             {enabledColumns.map((col) => {
                 const value = evaluateColumn(col, { item, cache }, columns, cache);
@@ -124,27 +131,96 @@ const TableRow = memo(({ item, columns, cache }: TableRowProps) => {
 
                 if (col.id === "name") {
                     return (
+                        <React.Fragment key={col.id}>
+                            <td className="p-3 border-b border-[#c9bca0] w-10">
+                                <Link
+                                    href={`/item/${item.id}`}
+                                    target="_blank"
+                                    className="w-6 h-6 flex items-center justify-center text-inherit no-underline"
+                                >
+                                    <ItemImage name={item.name} />
+                                </Link>
+                            </td>
+                            <td className="p-3 border-b border-[#c9bca0]">
+                                <Link
+                                    href={`/item/${item.id}`}
+                                    target="_blank"
+                                    className="text-inherit no-underline hover:underline font-medium"
+                                >
+                                    {formatted}
+                                </Link>
+                            </td>
+                        </React.Fragment>
+                    );
+                }
+
+                if (col.id === "favorite") {
+                    const favorite = isFavorite(item.id);
+                    return (
                         <td key={col.id} className="p-3 border-b border-[#c9bca0]">
-                            <Link
-                                href={`/item/${item.id}`}
-                                target="_blank"
-                                className="text-inherit no-underline hover:underline font-medium"
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    toggleFavorite(item.id);
+                                }}
+                                className="focus:outline-none hover:scale-110 transition-transform"
                             >
-                                {formatted}
-                            </Link>
+                                <Heart
+                                    className={`w-4 h-4 ${favorite ? "fill-osrs-primary text-osrs-primary" : "text-osrs-text opacity-40 hover:opacity-100"}`}
+                                />
+                            </button>
                         </td>
                     );
                 }
 
                 if (col.id === "profit" || col.id === "alchMargin") {
                     const numVal = Number(value);
-                    const colorClass = numVal >= 0 ? "text-green-700 font-bold" : "text-red-700 font-bold";
+                    const colorClass = numVal >= 0 ? "text-osrs-profit font-bold" : "text-osrs-loss font-bold";
                     return (
                         <td key={col.id} className="p-3 border-b border-[#c9bca0]">
                             {isLoading ? (
                                 <Spinner size="sm" />
                             ) : (
                                 <span className={colorClass}>{formatted}</span>
+                            )}
+                        </td>
+                    );
+                }
+
+                if (col.id === "members") {
+                    return (
+                        <td key={col.id} className="p-3 border-b border-[#c9bca0]">
+                            <div className="flex items-center justify-center">
+                                <img
+                                    src={item.members ? MEMBER_ICON : NON_MEMBER_ICON}
+                                    alt={item.members ? "Member" : "Non-Member"}
+                                    className="w-4 h-4"
+                                />
+                            </div>
+                        </td>
+                    );
+                }
+
+                if (col.id === "low") {
+                    return (
+                        <td key={col.id} className="p-3 border-b border-[#c9bca0] align-middle">
+                            {isLoading ? (
+                                <Spinner size="sm" />
+                            ) : (
+                                <span>{formatted}</span>
+                            )}
+                        </td>
+                    );
+                }
+
+                if (col.id === "high") {
+                    return (
+                        <td key={col.id} className="p-3 border-b border-[#c9bca0] align-middle">
+                            {isLoading ? (
+                                <Spinner size="sm" />
+                            ) : (
+                                <span>{formatted}</span>
                             )}
                         </td>
                     );
@@ -161,6 +237,8 @@ const TableRow = memo(({ item, columns, cache }: TableRowProps) => {
 }, (prevProps, nextProps) => {
     // Only re-render if item ID changes or columns change
     if (prevProps.item.id !== nextProps.item.id) return false;
+    if (prevProps.action !== nextProps.action) return false;
+    if (prevProps.showActionColumn !== nextProps.showActionColumn) return false;
 
     const prevEnabled = prevProps.columns.filter(c => c.enabled).map(c => c.id).join(",");
     const nextEnabled = nextProps.columns.filter(c => c.enabled).map(c => c.id).join(",");

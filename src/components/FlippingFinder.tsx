@@ -6,8 +6,7 @@ import FlippingTable from "./FlippingTable";
 import { useItemData } from "@/context/ItemDataContext";
 import SavedFilterManager from "./SavedFilterManager";
 import { SavedFilter } from "@/lib/filters/types";
-import { loadFilters, addFilter, updateFilter, deleteFilter, toggleFilter } from "@/lib/filters/storage";
-import { PRESET_FILTERS } from "@/lib/filters/presets";
+import { useFilters } from "@/context/FilterContext";
 import { evaluateFilters } from "@/lib/filters/engine";
 
 import { CustomColumn } from "@/lib/columns/types";
@@ -16,39 +15,31 @@ import { PRESET_COLUMNS } from "@/lib/columns/presets";
 
 export default function FlippingFinder() {
     const { items, loading } = useItemData();
+    const { savedFilters, handleAddFilter, handleUpdateFilter, handleDeleteFilter, handleToggleFilter } = useFilters();
     const [searchQuery, setSearchQuery] = useState("");
-    const [savedFilters, setSavedFilters] = useState<SavedFilter[]>(PRESET_FILTERS);
     const [customColumns, setCustomColumns] = useState<CustomColumn[]>(PRESET_COLUMNS);
+    const [previewFilter, setPreviewFilter] = useState<SavedFilter | null>(null);
 
     useEffect(() => {
-        loadFilters().then(setSavedFilters);
         loadColumns().then(setCustomColumns);
     }, []);
 
-    const handleAddFilter = async (filter: SavedFilter) => {
-        const newFilters = await addFilter(filter);
-        setSavedFilters(newFilters);
+
+
+    const handlePreviewFilter = (filter: SavedFilter | null) => {
+        setPreviewFilter(filter);
     };
 
-    const handleUpdateFilter = async (filter: SavedFilter) => {
-        const newFilters = await updateFilter(filter.id, filter);
-        setSavedFilters(newFilters);
-    };
-
-    const handleDeleteFilter = async (id: string) => {
-        const newFilters = await deleteFilter(id);
-        setSavedFilters(newFilters);
-    };
-
-    const handleToggleFilter = async (id: string) => {
-        const newFilters = await toggleFilter(id);
-        setSavedFilters(newFilters);
-    };
+    // Combine saved filters with preview filter for table display
+    const effectiveFilters = previewFilter
+        ? [...savedFilters, { ...previewFilter, enabled: true }]
+        : savedFilters;
 
     // Filter logic
     const filteredItems = items.filter((item) => {
-        // 1. Apply Saved Filters (JSON Logic)
-        if (!evaluateFilters(item, savedFilters, customColumns)) return false;
+        // 1. Apply Saved Filters
+        const results = evaluateFilters(item, effectiveFilters, customColumns, items);
+        if (results.length === 0) return false;
 
         // 2. Apply Search
         if (searchQuery) {
@@ -67,14 +58,18 @@ export default function FlippingFinder() {
                 onUpdateFilter={handleUpdateFilter}
                 onDeleteFilter={handleDeleteFilter}
                 onToggleFilter={handleToggleFilter}
+                items={items}
+                columns={customColumns}
+                onPreviewFilter={handlePreviewFilter}
             />
             {loading && items.length === 0 ? (
                 <div className="text-center p-4 text-osrs-text">Loading data...</div>
             ) : (
                 <FlippingTable
-                    items={filteredItems}
+                    items={items}
                     searchQuery={searchQuery}
                     onSearchChange={setSearchQuery}
+                    filters={effectiveFilters}
                 />
             )}
         </div>

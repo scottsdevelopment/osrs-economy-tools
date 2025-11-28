@@ -4,6 +4,10 @@ import Link from "next/link";
 import { getItemImageUrl } from "@/lib/api";
 import { ItemMapping, PriceData } from "@/lib/types";
 import ItemCharts from "./ItemCharts";
+import { Heart, Copy, ExternalLink, Database } from "lucide-react";
+import { useFavorites } from "@/context/FavoritesContext";
+import { useState } from "react";
+import { BUY_ICON, SELL_ICON } from "@/lib/constants/icons";
 
 interface ItemDetailsProps {
     item: ItemMapping;
@@ -12,6 +16,9 @@ interface ItemDetailsProps {
 }
 
 export default function ItemDetails({ item, price, volume }: ItemDetailsProps) {
+    const { isFavorite, toggleFavorite } = useFavorites();
+    const [copied, setCopied] = useState(false);
+
     const formatNumber = (num: number | undefined) => (num ? num.toLocaleString() : "-");
 
     const timeAgo = (timestamp: number | undefined) => {
@@ -28,102 +35,160 @@ export default function ItemDetails({ item, price, volume }: ItemDetailsProps) {
     const margin = price.high && price.low ? price.high * 0.98 - price.low : 0;
     const roi = price.low ? (margin / price.low) * 100 : 0;
     const potentialProfit = margin * (item.limit || 0);
-
     const alchProfit = item.highalch && price.low ? item.highalch - price.low : 0;
 
+    const handleCopy = () => {
+        navigator.clipboard.writeText(item.name);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const favorite = isFavorite(item.id);
+
     return (
-        <div className="max-w-[1000px] mx-auto bg-[#d8ccb4] p-8 rounded-lg shadow-[0_0_10px_rgba(0,0,0,0.3)] text-left">
-            <div className="flex justify-between items-center mb-4">
-                <Link href="/" className="text-osrs-accent hover:underline">
-                    ← Back to List
-                </Link>
-            </div>
-
-            <div className="flex items-center gap-4 mb-4 border-b-2 border-osrs-border pb-4">
-                <img
-                    id="item-icon"
-                    src={getItemImageUrl(item.name)}
-                    alt={item.name}
-                    className="w-16 h-16"
-                    onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                />
-                <div className="flex-1">
-                    <h2 className="m-0 text-osrs-accent text-3xl font-header font-bold">{item.name}</h2>
-                    <span className="text-[#666] text-sm">(Item ID: {item.id})</span>
+        <div className="max-w-[1200px] mx-auto">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row justify-between items-end mb-4 gap-4">
+                <div className="flex items-center gap-4">
+                    <h3 className="m-0 text-[#2c1e12] text-3xl font-header font-bold flex items-center gap-3">
+                        <img
+                            src={getItemImageUrl(item.name)}
+                            alt={item.name}
+                            className="w-8 h-8 object-contain"
+                            onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = "none";
+                            }}
+                        />
+                        {item.name}
+                        <span className="text-[#666] text-sm font-normal">(Item ID: {item.id})</span>
+                    </h3>
                 </div>
+
                 <div className="flex gap-2">
-                    {item.members ? (
-                        <span className="px-3 py-1 rounded-xl text-xs font-bold text-white bg-[#d9534f]">Members</span>
-                    ) : (
-                        <span className="px-3 py-1 rounded-xl text-xs font-bold text-white bg-[#5bc0de]">F2P</span>
-                    )}
+                    <a
+                        href={`https://oldschool.runescape.wiki/w/Special:Lookup?type=item&id=${item.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-secondary px-3 py-2 bg-[#e9e4d4] text-[#2c1e12] font-bold rounded border border-[#c9bca0] hover:bg-[#d8ccb4] transition-colors"
+                    >
+                        Wiki
+                    </a>
+                    <a
+                        href={`https://secure.runescape.com/m=itemdb_oldschool/viewitem?obj=${item.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-secondary px-3 py-2 bg-[#e9e4d4] text-[#2c1e12] font-bold rounded border border-[#c9bca0] hover:bg-[#d8ccb4] transition-colors"
+                    >
+                        GEDB
+                    </a>
+                    <button
+                        onClick={handleCopy}
+                        title="Copy item name"
+                        className="btn btn-secondary px-3 py-2 bg-[#e9e4d4] text-[#2c1e12] font-bold rounded border border-[#c9bca0] hover:bg-[#d8ccb4] transition-colors"
+                    >
+                        <Copy size={16} />
+                    </button>
+                    <button
+                        onClick={() => toggleFavorite(item.id)}
+                        title="Add item to favourites"
+                        className="btn btn-secondary px-3 py-2 bg-[#e9e4d4] font-bold rounded border border-[#c9bca0] hover:bg-[#d8ccb4] transition-colors"
+                    >
+                        <Heart size={16} className={favorite ? "fill-osrs-primary text-osrs-primary" : "text-[#2c1e12]"} />
+                    </button>
                 </div>
             </div>
 
-            <p className="italic text-[#555] mb-8">{item.examine}</p>
+            {/* Main Data Box */}
+            <div className="bg-[#d8ccb4] p-6 rounded-lg shadow-[0_0_10px_rgba(0,0,0,0.3)] text-left mb-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Left Column: Prices */}
+                    <div className="flex flex-col gap-6">
+                        {/* Buy Price */}
+                        <div>
+                            <h5 className="m-0 text-[#2c1e12] font-bold text-lg flex items-center gap-2">
+                                <img src={BUY_ICON} alt="Buy" className="w-5 h-5" />
+                                Buy price: <span className="text-[#2c1e12]">{formatNumber(price.low)}</span>
+                            </h5>
+                            <p className="text-sm text-[#666] mt-1">Last trade: <span className="text-[#666]">{timeAgo(price.lowTime)}</span></p>
+                        </div>
 
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-6 mb-8">
-                {/* Buy Side */}
-                <div className="bg-osrs-input p-6 rounded-lg border border-osrs-border flex items-center gap-4 border-l-4 border-l-[#014cc0]">
-                    <div className="flex-1">
-                        <h3 className="m-0 mb-2 text-base text-[#014cc0]">Buy Price</h3>
-                        <p className="text-2xl font-bold m-0">{formatNumber(price.low)}</p>
-                        <p className="text-sm text-[#666] mt-1">Last trade: {timeAgo(price.lowTime)}</p>
+                        {/* Sell Price */}
+                        <div>
+                            <h5 className="m-0 text-[#2c1e12] font-bold text-lg flex items-center gap-2">
+                                <img src={SELL_ICON} alt="Sell" className="w-5 h-5" />
+                                Sell price: <span className="text-[#2c1e12]">{formatNumber(price.high)}</span>
+                            </h5>
+                            <p className="text-sm text-[#666] mt-1">Last trade: <span className="text-[#666]">{timeAgo(price.highTime)}</span></p>
+                        </div>
                     </div>
-                </div>
 
-                {/* Sell Side */}
-                <div className="bg-osrs-input p-6 rounded-lg border border-osrs-border flex items-center gap-4 border-l-4 border-l-[#c02614]">
-                    <div className="flex-1">
-                        <h3 className="m-0 mb-2 text-base text-[#c02614]">Sell Price</h3>
-                        <p className="text-2xl font-bold m-0">{formatNumber(price.high)}</p>
-                        <p className="text-sm text-[#666] mt-1">Last trade: {timeAgo(price.highTime)}</p>
+                    {/* Middle Column: Key Stats */}
+                    <div className="flex flex-col gap-4">
+                        <div>
+                            <h5 className="m-0 text-[#2c1e12] font-bold text-lg">
+                                Daily volume: <span className="text-[#28a745]">{formatNumber(volume)}</span>
+                            </h5>
+                            <p className="text-sm text-[#666] mt-1">Based on the official OSRS GEDB</p>
+                        </div>
+                        <div>
+                            <h5 className="m-0 text-[#2c1e12] font-bold text-lg">
+                                Margin: <span className={margin > 0 ? "text-osrs-profit" : "text-osrs-loss"}>
+                                    {Math.round(margin).toLocaleString()}
+                                </span>
+                            </h5>
+                        </div>
+                        <div>
+                            <h6 className="m-0 text-[#2c1e12] font-bold text-lg">
+                                Potential profit: <span className={potentialProfit > 0 ? "text-osrs-profit" : "text-osrs-loss"}>
+                                    {Math.round(potentialProfit).toLocaleString()}
+                                </span>
+                            </h6>
+                        </div>
+                        <div>
+                            <h5 className="m-0 text-[#2c1e12] font-bold text-lg">
+                                ROI: <span className="text-[#2c1e12]">{roi.toFixed(2)}%</span>
+                            </h5>
+                        </div>
                     </div>
-                </div>
 
-                {/* Margin */}
-                <div className="bg-osrs-input p-6 rounded-lg border border-osrs-border flex items-center gap-4 border-l-4 border-l-[#936039]">
-                    <div className="flex-1">
-                        <h3 className="m-0 mb-2 text-base text-[#936039]">Margin</h3>
-                        <p className={`text-xl font-bold m-0 ${margin > 0 ? "text-[#014cc0]" : "text-[#c02614]"}`}>
-                            {Math.round(margin).toLocaleString()}
-                        </p>
-                        <p className="text-sm text-[#666] mt-1">ROI: {roi.toFixed(2)}%</p>
+                    {/* Right Column: Details Table */}
+                    <div>
+                        <table className="w-full text-sm text-left">
+                            <tbody>
+                                <tr className="border-b border-[#c9bca0]">
+                                    <td className="p-2 font-bold text-[#2c1e12]">Buy Limit</td>
+                                    <td className="p-2 font-bold text-[#2c1e12] text-right">{formatNumber(item.limit)}</td>
+                                </tr>
+                                <tr className="border-b border-[#c9bca0]">
+                                    <td className="p-2 font-bold text-[#2c1e12]">High Alch</td>
+                                    <td className="p-2 font-bold text-[#2c1e12] text-right">
+                                        {formatNumber(item.highalch)}
+                                        <span className={`ml-1 text-xs ${alchProfit > 0 ? "text-[#c02614]" : "text-[#c02614]"}`}>
+                                            ({formatNumber(alchProfit)})
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr className="border-b border-[#c9bca0]">
+                                    <td className="p-2 font-bold text-[#2c1e12]">Low Alch</td>
+                                    <td className="p-2 font-bold text-[#2c1e12] text-right">{formatNumber(item.lowalch)}</td>
+                                </tr>
+                                <tr className="border-b border-[#c9bca0]">
+                                    <td className="p-2 font-bold text-[#2c1e12]">Members</td>
+                                    <td className="p-2 text-right">
+                                        {item.members ? (
+                                            <img src="https://oldschool.runescape.wiki/images/Member_icon.png" alt="Members" title="Members object" />
+                                        ) : (
+                                            <img src="https://oldschool.runescape.wiki/images/Free-to-play_icon.png" alt="F2P" title="Free-to-play object" />
+                                        )}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="p-2 font-bold text-[#2c1e12] align-top">Examine</td>
+                                    <td className="p-2 italic text-[#2c1e12] text-right">{item.examine}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                </div>
-
-                {/* Profit Potential */}
-                <div className="bg-osrs-input p-6 rounded-lg border border-osrs-border flex items-center gap-4 border-l-4 border-l-[#28a745]">
-                    <div className="flex-1">
-                        <h3 className="m-0 mb-2 text-base text-[#28a745]">Potential Profit</h3>
-                        <p className={`text-2xl font-bold m-0 text-osrs-accent ${potentialProfit > 0 ? "text-[#014cc0]" : "text-[#c02614]"}`}>
-                            {Math.round(potentialProfit).toLocaleString()}
-                        </p>
-                        <p className="text-sm text-[#666] mt-1">Limit: {formatNumber(item.limit)}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-4 bg-osrs-panel p-6 rounded-lg mb-8">
-                <div className="flex flex-col gap-1">
-                    <strong className="text-sm text-[#666] font-bold">Daily Volume: </strong>
-                    <span className="text-lg">{formatNumber(volume)}</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                    <strong className="text-sm text-[#666] font-bold">High Alch: </strong>
-                    <span className="text-lg">{formatNumber(item.highalch)}</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                    <strong className="text-sm text-[#666] font-bold">Low Alch: </strong>
-                    <span className="text-lg">{formatNumber(item.lowalch)}</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                    <strong className="text-sm text-[#666] font-bold">Alch Profit: </strong>
-                    <span className={`text-lg ${alchProfit > 0 ? "text-[#014cc0]" : "text-[#c02614]"}`}>
-                        {formatNumber(alchProfit)} <span className="text-sm text-[#666]">(excl. nat)</span>
-                    </span>
                 </div>
             </div>
 

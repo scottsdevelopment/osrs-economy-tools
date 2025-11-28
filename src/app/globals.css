@@ -10,6 +10,8 @@
   --color-osrs-button: #b8a282;
   --color-osrs-button-hover: #d0bd97;
   --color-osrs-border: #94866d;
+  --color-osrs-profit: #014cc0;
+  --color-osrs-loss: #c02614;
 
   --font-main: 'Inter', sans-serif;
   --font-header: 'Cinzel', serif;
@@ -49,4 +51,24 @@ h1 {
   .btn-primary {
     @apply bg-osrs-primary text-[#f5e6d3] px-5 py-2.5 border border-[#3e2616] rounded font-header font-bold cursor-pointer transition-all shadow-sm hover:bg-[#7a4d2b] hover:-translate-y-px hover:shadow-md active:translate-y-0 active:shadow-sm;
   }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-osrs-panel);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-osrs-accent);
+  border-radius: 5px;
+  border: 2px solid var(--color-osrs-panel);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-osrs-primary);
 }

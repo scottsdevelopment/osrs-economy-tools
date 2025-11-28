@@ -1,201 +1,373 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { SavedFilter } from "@/lib/filters/types";
-import { validateRule } from "@/lib/filters/engine";
-import { X, Plus, Trash2 } from "lucide-react";
-import { RulesLogic } from "json-logic-js";
+import { SavedFilter, FilterExpression } from "@/lib/filters/types";
+import { validateExpressionString } from "@/lib/filters/engine";
+import { X, Plus, Trash2, HelpCircle } from "lucide-react";
 import { CustomColumn } from "@/lib/columns/types";
 import { loadColumns } from "@/lib/columns/storage";
+import { ProcessedItem } from "@/lib/types";
+import { evaluateFilters } from "@/lib/filters/engine";
 
 interface FilterBuilderProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (filter: SavedFilter) => void;
     initialFilter?: SavedFilter;
+    inline?: boolean;
+    initialCode?: string;
+    // Controlled props
+    filterName: string;
+    setFilterName: (name: string) => void;
+    category: string;
+    setCategory: (category: string) => void;
+    description: string;
+    setDescription: (description: string) => void;
+    onCodeChange?: (code: string) => void;
+    onPreview?: (filter: SavedFilter | null) => void;
+    items?: ProcessedItem[];
+    columns?: CustomColumn[];
 }
 
-interface Condition {
-    field: string;
-    operator: string;
-    value: string | number;
-}
-
-const OPERATORS = [
-    { value: "==", label: "Equals" },
-    { value: "!=", label: "Not Equals" },
-    { value: ">", label: "Greater Than" },
-    { value: ">=", label: "Greater or Equal" },
-    { value: "<", label: "Less Than" },
-    { value: "<=", label: "Less or Equal" },
-];
-
-export default function FilterBuilder({ isOpen, onClose, onSave, initialFilter }: FilterBuilderProps) {
-    const [name, setName] = useState("");
-    const [category, setCategory] = useState("Custom");
-    const [conditions, setConditions] = useState<Condition[]>([{ field: "columns.profit", operator: ">=", value: 0 }]);
-    const [advancedMode, setAdvancedMode] = useState(false);
-    const [rawJson, setRawJson] = useState("");
+export default function FilterBuilder({
+    isOpen,
+    onClose,
+    onSave,
+    initialFilter,
+    inline = false,
+    initialCode = "",
+    filterName,
+    setFilterName,
+    category,
+    setCategory,
+    description,
+    setDescription,
+    onCodeChange,
+    onPreview,
+    items = [],
+    columns = []
+}: FilterBuilderProps) {
+    // We still keep expressions internal, but sync with initialCode and report changes
+    const [expressions, setExpressions] = useState<FilterExpression[]>([{ code: "" }]);
+    const [independent, setIndependent] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [allColumns, setAllColumns] = useState<CustomColumn[]>([]);
+    const isInternalUpdate = React.useRef(false);
 
     useEffect(() => {
-        loadColumns().then(cols => {
-            setAllColumns(cols);
-        });
+        loadColumns().then(setAllColumns);
     }, []);
 
-    const groupedColumns = allColumns.reduce((acc, col) => {
-        const group = col.group || "Other";
-        if (!acc[group]) acc[group] = [];
-        acc[group].push(col);
-        return acc;
-    }, {} as Record<string, CustomColumn[]>);
-
     useEffect(() => {
+        if (isInternalUpdate.current) {
+            isInternalUpdate.current = false;
+            return;
+        }
+
         if (initialFilter) {
-            setName(initialFilter.name);
-            setCategory(initialFilter.category);
-            setRawJson(JSON.stringify(initialFilter.rule, null, 2));
-
-            try {
-                const rule = initialFilter.rule as any;
-                const newConditions: Condition[] = [];
-
-                const parseCondition = (op: string, args: any[]) => {
-                    const fieldVar = args[0]?.var;
-                    const value = args[1];
-
-                    if (fieldVar && value !== undefined) {
-                        let mappedField = fieldVar;
-                        if (fieldVar.startsWith("item.")) {
-                            const propName = fieldVar.replace("item.", "");
-                            const col = allColumns.find(c => c.id === propName || c.expression === fieldVar);
-                            if (col) {
-                                mappedField = `columns.${col.id}`;
-                            }
-                        }
-
-                        newConditions.push({ field: mappedField, operator: op, value: String(value) });
-                    }
-                };
-
-                if (rule["and"]) {
-                    rule["and"].forEach((cond: any) => {
-                        const op = Object.keys(cond)[0];
-                        parseCondition(op, cond[op]);
-                    });
-                } else {
-                    const op = Object.keys(rule)[0];
-                    parseCondition(op, rule[op]);
-                }
-
-                if (newConditions.length > 0) {
-                    setConditions(newConditions);
-                    setAdvancedMode(false);
-                } else {
-                    setAdvancedMode(true);
-                }
-            } catch (e) {
-                setAdvancedMode(true);
+            setIndependent(initialFilter.independent || false);
+            if (initialFilter.expressions) {
+                setExpressions(initialFilter.expressions);
+            } else {
+                setExpressions([{ code: "" }]);
             }
-
         } else {
-            setName("");
-            setCategory("Custom");
-            setConditions([{ field: "columns.profit", operator: ">=", value: 0 }]);
-            setRawJson("");
-            setAdvancedMode(false);
+            setIndependent(false);
+            if (initialCode) {
+                setExpressions([{ code: initialCode }]);
+            } else if (!inline) {
+                // Only reset if not inline (to avoid wiping state on re-renders if parent doesn't pass initialCode correctly)
+                setExpressions([{ code: "" }]);
+            }
         }
         setError(null);
-    }, [initialFilter, isOpen, allColumns]);
+    }, [initialFilter, isOpen, initialCode, inline]);
 
+
+    // Report code changes and trigger preview
     useEffect(() => {
-        if (advancedMode && !rawJson) {
-            const logicConditions = conditions.map(c => {
-                const val = (c.value === "true" || c.value === "false")
-                    ? (c.value === "true")
-                    : !isNaN(Number(c.value)) ? Number(c.value) : c.value;
-                return { [c.operator]: [{ "var": c.field }, val] } as RulesLogic;
-            });
-
-            let rule: RulesLogic;
-            if (logicConditions.length === 1) {
-                rule = logicConditions[0];
-            } else {
-                rule = { "and": logicConditions } as RulesLogic;
-            }
-            setRawJson(JSON.stringify(rule, null, 2));
+        const code = expressions.map(e => e.code).join(" and ");
+        if (onCodeChange) {
+            onCodeChange(code);
         }
-    }, [advancedMode]);
 
-    const handleAddCondition = () => {
-        setConditions([...conditions, { field: "columns.profit", operator: ">=", value: 0 }]);
+        if (onPreview) {
+            // Create a temporary filter for preview
+            const tempFilter: SavedFilter = {
+                id: "preview",
+                name: filterName,
+                category: category,
+                description: description,
+                expressions: expressions,
+                enabled: true,
+                independent: independent
+            };
+            onPreview(tempFilter);
+        }
+    }, [expressions, filterName, category, description, independent, onCodeChange, onPreview]);
+
+    // Count matching items for internal preview
+    const matchCount = React.useMemo(() => {
+        if (!items.length) return 0;
+
+        // Create temporary filter
+        const tempFilter: SavedFilter = {
+            id: "preview",
+            name: filterName,
+            category: category,
+            description: description,
+            expressions: expressions,
+            enabled: true,
+            independent: independent
+        };
+
+        // Filter valid expressions
+        const validExpressions = expressions.filter(e => e.code.trim() && validateExpressionString(e.code));
+        if (validExpressions.length === 0) return 0;
+
+        // Use only valid expressions for counting
+        const filterToTest = { ...tempFilter, expressions: validExpressions };
+
+        try {
+            return items.filter((item) => {
+                const results = evaluateFilters(item, [filterToTest], columns, items);
+                return results.length > 0;
+            }).length;
+        } catch (e) {
+            console.error("Error evaluating filter preview:", e);
+            return 0;
+        }
+    }, [expressions, items, columns, filterName, category, description, independent]);
+
+    const handleAddExpression = () => {
+        isInternalUpdate.current = true;
+        setExpressions([...expressions, { code: "" }]);
     };
 
-    const handleRemoveCondition = (index: number) => {
-        setConditions(conditions.filter((_, i) => i !== index));
+    const handleRemoveExpression = (index: number) => {
+        isInternalUpdate.current = true;
+        setExpressions(expressions.filter((_, i) => i !== index));
     };
 
-    const updateCondition = (index: number, field: keyof Condition, value: any) => {
-        const newConditions = [...conditions];
-        newConditions[index] = { ...newConditions[index], [field]: value };
-        setConditions(newConditions);
+    const updateExpression = (index: number, field: keyof FilterExpression, value: string) => {
+        isInternalUpdate.current = true;
+        const newExpressions = [...expressions];
+        newExpressions[index] = { ...newExpressions[index], [field]: value };
+        setExpressions(newExpressions);
     };
 
     const handleSave = () => {
-        if (!name.trim()) {
+        if (!filterName.trim()) {
             setError("Name is required");
             return;
         }
 
-        let rule: RulesLogic;
-
-        if (advancedMode) {
-            try {
-                rule = JSON.parse(rawJson);
-            } catch (e) {
-                setError("Invalid JSON");
+        // Validate all expressions
+        for (let i = 0; i < expressions.length; i++) {
+            const expr = expressions[i];
+            if (!expr.code.trim()) {
+                setError(`Expression #${i + 1} cannot be empty`);
                 return;
             }
-        } else {
-            const logicConditions = conditions.map(c => {
-                const val = (c.value === "true" || c.value === "false")
-                    ? (c.value === "true")
-                    : !isNaN(Number(c.value)) ? Number(c.value) : c.value;
-                return { [c.operator]: [{ "var": c.field }, val] } as RulesLogic;
-            });
-
-            if (logicConditions.length === 1) {
-                rule = logicConditions[0];
-            } else {
-                rule = { "and": logicConditions } as RulesLogic;
+            if (!validateExpressionString(expr.code)) {
+                setError(`Invalid syntax in Expression #${i + 1}`);
+                return;
             }
-        }
-
-        if (!validateRule(rule)) {
-            setError("Invalid rule structure");
-            return;
+            if (expr.highlightItem && !validateExpressionString(expr.highlightItem)) {
+                setError(`Invalid syntax in Highlight Item for Expression #${i + 1}`);
+                return;
+            }
         }
 
         const newFilter: SavedFilter = {
             id: initialFilter?.id || `filter_${Date.now()}`,
-            name,
-            rule,
+            name: filterName,
+            expressions,
             enabled: true,
             category,
-            description: "Custom filter"
+            description,
+            independent
         };
 
         onSave(newFilter);
         onClose();
     };
 
-    if (!isOpen) return null;
+    if (!isOpen && !inline) return null;
 
+    const content = (
+        <div className="space-y-6">
+            {/* Header Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-sm font-bold mb-1 text-osrs-text">Filter Name</label>
+                    <input
+                        type="text"
+                        value={filterName}
+                        onChange={(e) => setFilterName(e.target.value)}
+                        className="w-full h-[42px] p-2 border border-osrs-border rounded bg-osrs-input text-sm focus:outline-none focus:border-osrs-accent"
+                        placeholder="e.g., High Profit Decants"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-bold mb-1 text-osrs-text">Category</label>
+                    <select
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        className="w-full h-[42px] px-2 border border-osrs-border rounded bg-osrs-input text-sm focus:outline-none focus:border-osrs-accent"
+                    >
+                        <option value="Custom">Custom</option>
+                        <option value="Price">Price</option>
+                        <option value="Profit">Profit</option>
+                        <option value="Volume">Volume</option>
+                        <option value="Strategy">Strategy</option>
+                    </select>
+                </div>
+                <div className="md:col-span-2">
+                    <label className="block text-sm font-bold mb-1 text-osrs-text">Description</label>
+                    <input
+                        type="text"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className="w-full h-[42px] p-2 border border-osrs-border rounded bg-osrs-input text-sm focus:outline-none focus:border-osrs-accent"
+                        placeholder="Briefly describe what this filter does..."
+                    />
+                </div>
+                {!inline && (
+                    <div className="md:col-span-2 flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id="independent-mode"
+                            checked={independent}
+                            onChange={(e) => setIndependent(e.target.checked)}
+                            className="w-4 h-4 accent-osrs-accent"
+                        />
+                        <label htmlFor="independent-mode" className="text-sm font-bold text-osrs-text cursor-pointer">
+                            Independent Mode (Results are added to the table regardless of other filters)
+                        </label>
+                    </div>
+                )}
+            </div>
+
+            <div className="border-t border-osrs-border pt-4">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-osrs-text text-sm">Expressions</h3>
+                    <div className="text-xs text-gray-500 flex items-center gap-1">
+                        <HelpCircle className="w-3 h-3" />
+                        <span>Available: <code>item.*</code>, <code>columns.*</code>, <code>getItem(id)</code>. Use <code>and</code>/<code>or</code>/<code>not</code> for logic.</span>
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    {expressions.map((expr, index) => (
+                        <div key={index} className="p-3 border border-osrs-border rounded bg-white/50 relative">
+                            <div className="absolute top-2 right-2">
+                                <button
+                                    onClick={() => handleRemoveExpression(index)}
+                                    className="p-1 text-red-600 hover:bg-red-100 rounded"
+                                    disabled={expressions.length === 1}
+                                    title="Remove Expression"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
+
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="block text-xs font-bold mb-1 text-gray-600">Condition (JS Code)</label>
+                                    <textarea
+                                        value={expr.code}
+                                        onChange={(e) => updateExpression(index, "code", e.target.value)}
+                                        className="w-full h-20 p-2 border border-osrs-border rounded bg-osrs-input font-mono text-sm focus:outline-none focus:border-osrs-accent"
+                                        placeholder="e.g. columns.profit > 1000 and item.members"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold mb-1 text-gray-600">Action Label (Optional)</label>
+                                        <input
+                                            type="text"
+                                            value={expr.action || ""}
+                                            onChange={(e) => updateExpression(index, "action", e.target.value)}
+                                            className="w-full p-2 border border-osrs-border rounded bg-osrs-input text-sm"
+                                            placeholder="e.g. Decant, Buy"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold mb-1 text-gray-600">Highlight Item (Optional)</label>
+                                        <input
+                                            type="text"
+                                            value={expr.highlightItem || ""}
+                                            onChange={(e) => updateExpression(index, "highlightItem", e.target.value)}
+                                            className="w-full p-2 border border-osrs-border rounded bg-osrs-input text-sm font-mono"
+                                            placeholder="Expression or ID (e.g. getItem(123))"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <button
+                    onClick={handleAddExpression}
+                    className="mt-4 flex items-center gap-1 text-sm text-osrs-accent hover:underline font-bold"
+                >
+                    <Plus className="w-4 h-4" /> Add Another Expression
+                </button>
+            </div>
+
+            {/* Preview */}
+            <div className="p-3 bg-osrs-panel border border-osrs-border rounded">
+                <div className="text-sm font-bold text-osrs-text mb-1">Live Preview</div>
+                {expressions.some(e => e.code.trim()) ? (
+                    <div className="text-sm">
+                        <div className="text-green-600 font-bold">
+                            ✓ {matchCount} item{matchCount !== 1 ? "s" : ""} match this filter
+                        </div>
+                    </div>
+                ) : (
+                    <div className="text-sm text-gray-500">
+                        Enter an expression to see preview
+                    </div>
+                )}
+            </div>
+
+            {error && (
+                <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+                    {error}
+                </div>
+            )}
+
+            <div className="flex justify-end gap-2">
+                {!inline && (
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 text-sm font-bold text-gray-600 hover:text-gray-800"
+                    >
+                        Cancel
+                    </button>
+                )}
+                <button
+                    onClick={handleSave}
+                    className="px-4 py-2 bg-osrs-accent text-white text-sm font-bold rounded hover:bg-osrs-accent/90 transition-colors"
+                >
+                    Save Filter
+                </button>
+            </div>
+        </div>
+    );
+
+    // If inline, render without modal wrapper
+    if (inline) {
+        return content;
+    }
+
+    // Otherwise, render with modal wrapper
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-osrs-panel border-2 border-osrs-border rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
+            <div className="bg-osrs-panel border-2 border-osrs-border rounded-lg shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh]">
                 <div className="flex justify-between items-center p-4 bg-osrs-button border-b border-osrs-border">
                     <h2 className="text-lg font-bold text-[#2c1e12] font-header">
                         {initialFilter ? "Edit Filter" : "New Custom Filter"}
@@ -205,131 +377,8 @@ export default function FilterBuilder({ isOpen, onClose, onSave, initialFilter }
                     </button>
                 </div>
 
-                <div className="p-6 space-y-6 overflow-y-auto">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-bold mb-1 text-osrs-text">Filter Name</label>
-                            <input
-                                type="text"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="w-full p-2 border border-osrs-border rounded bg-osrs-input focus:outline-none focus:border-osrs-accent"
-                                placeholder="e.g., High Profit"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold mb-1 text-osrs-text">Category</label>
-                            <select
-                                value={category}
-                                onChange={(e) => setCategory(e.target.value)}
-                                className="w-full p-2 border border-osrs-border rounded bg-osrs-input focus:outline-none focus:border-osrs-accent"
-                            >
-                                <option value="Custom">Custom</option>
-                                <option value="Price">Price</option>
-                                <option value="Profit">Profit</option>
-                                <option value="Volume">Volume</option>
-                                <option value="Strategy">Strategy</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div className="border-t border-osrs-border pt-4">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-osrs-text">Conditions (AND)</h3>
-                            <button
-                                onClick={() => setAdvancedMode(!advancedMode)}
-                                className="text-xs text-osrs-accent hover:underline"
-                            >
-                                {advancedMode ? "Switch to Simple Builder" : "Switch to Advanced JSON"}
-                            </button>
-                        </div>
-
-                        {advancedMode ? (
-                            <div className="space-y-2">
-                                <textarea
-                                    value={rawJson}
-                                    onChange={(e) => setRawJson(e.target.value)}
-                                    className="w-full h-48 p-2 border border-osrs-border rounded bg-osrs-input font-mono text-sm"
-                                    placeholder='{"and": [{">": [{"var": "columns.profit"}, 1000]}]}'
-                                />
-                                <p className="text-xs text-gray-500">
-                                    Use <code>{"{\"var\": \"columns.COLUMN_ID\"}"}</code> to reference columns.
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {conditions.map((condition, index) => (
-                                    <div key={index} className="flex gap-2 items-center">
-                                        <select
-                                            value={condition.field}
-                                            onChange={(e) => updateCondition(index, "field", e.target.value)}
-                                            className="flex-1 p-2 border border-osrs-border rounded bg-osrs-input"
-                                        >
-                                            {Object.entries(groupedColumns).map(([group, cols]) => (
-                                                <optgroup key={group} label={group}>
-                                                    {cols.map(col => (
-                                                        <option key={col.id} value={`columns.${col.id}`}>
-                                                            {col.name}
-                                                        </option>
-                                                    ))}
-                                                </optgroup>
-                                            ))}
-                                        </select>
-                                        <select
-                                            value={condition.operator}
-                                            onChange={(e) => updateCondition(index, "operator", e.target.value)}
-                                            className="w-32 p-2 border border-osrs-border rounded bg-osrs-input"
-                                        >
-                                            {OPERATORS.map(op => (
-                                                <option key={op.value} value={op.value}>{op.label}</option>
-                                            ))}
-                                        </select>
-                                        <input
-                                            type="text"
-                                            value={condition.value}
-                                            onChange={(e) => updateCondition(index, "value", e.target.value)}
-                                            className="w-32 p-2 border border-osrs-border rounded bg-osrs-input"
-                                            placeholder="Value"
-                                        />
-                                        <button
-                                            onClick={() => handleRemoveCondition(index)}
-                                            className="p-2 text-red-600 hover:bg-red-100 rounded"
-                                            disabled={conditions.length === 1}
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                ))}
-                                <button
-                                    onClick={handleAddCondition}
-                                    className="flex items-center gap-1 text-sm text-osrs-accent hover:underline font-bold"
-                                >
-                                    <Plus className="w-4 h-4" /> Add Condition
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    {error && (
-                        <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
-                            {error}
-                        </div>
-                    )}
-                </div>
-
-                <div className="p-4 border-t border-osrs-border flex justify-end gap-2 bg-gray-50 rounded-b-lg">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 text-sm font-bold text-gray-600 hover:text-gray-800"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        className="px-4 py-2 bg-osrs-accent text-white text-sm font-bold rounded hover:bg-osrs-accent/90 transition-colors"
-                    >
-                        Save Filter
-                    </button>
+                <div className="p-6 overflow-y-auto flex-1">
+                    {content}
                 </div>
             </div>
         </div>

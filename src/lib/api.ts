@@ -4,6 +4,8 @@ const API_BASE = "https://prices.runescape.wiki/api/v1/osrs";
 const API_LATEST = `${API_BASE}/latest`;
 const API_5M = `${API_BASE}/5m`;
 const API_1H = `${API_BASE}/1h`;
+const API_6H = `${API_BASE}/6h`;
+const API_24H = `${API_BASE}/24h`;
 const API_MAPPING = `${API_BASE}/mapping`;
 const API_VOLUMES = `${API_BASE}/volumes`;
 const API_TIMESERIES = `${API_BASE}/timeseries`;
@@ -52,11 +54,13 @@ export async function fetchTimeSeries(id: number, timestep: string): Promise<Tim
 
 export async function fetchFlippingData(): Promise<ProcessedItem[]> {
     try {
-        const [latestRes, mappingRes, fiveMRes, oneHRes, volumesRes] = await Promise.all([
+        const [latestRes, mappingRes, fiveMRes, oneHRes, sixHRes, twentyFourHRes, volumesRes] = await Promise.all([
             fetch(API_LATEST, { next: { revalidate: 60 } }),
             fetch(API_MAPPING, { next: { revalidate: 3600 } }),
             fetch(API_5M, { next: { revalidate: 300 } }),
             fetch(API_1H, { next: { revalidate: 300 } }),
+            fetch(API_6H, { next: { revalidate: 3600 } }),
+            fetch(API_24H, { next: { revalidate: 3600 } }),
             fetch(API_VOLUMES, { next: { revalidate: 3600 } }),
         ]);
 
@@ -64,6 +68,8 @@ export async function fetchFlippingData(): Promise<ProcessedItem[]> {
         const mapping = (await mappingRes.json()) as ItemMapping[];
         const fiveM = (await fiveMRes.json()).data as Record<string, TimeSeriesData>;
         const oneH = (await oneHRes.json()).data as Record<string, TimeSeriesData>;
+        const sixH = (await sixHRes.json()).data as Record<string, TimeSeriesData>;
+        const twentyFourH = (await twentyFourHRes.json()).data as Record<string, TimeSeriesData>;
         const volumes = (await volumesRes.json()).data as Record<string, number>;
 
         const results: ProcessedItem[] = [];
@@ -83,23 +89,35 @@ export async function fetchFlippingData(): Promise<ProcessedItem[]> {
 
             // 5m Data
             const item5m = fiveM[id];
-            const avg5m = item5m?.avgHighPrice || "-";
+            const avg5m = item5m?.avgHighPrice || 0;
             const highVol5m = item5m?.highPriceVolume || 0;
             const lowVol5m = item5m?.lowPriceVolume || 0;
 
             // 1h Data
             const item1h = oneH[id];
-            const avg1h = item1h?.avgHighPrice || "-";
+            const avg1h = item1h?.avgHighPrice || 0;
             const highVol1h = item1h?.highPriceVolume || 0;
             const lowVol1h = item1h?.lowPriceVolume || 0;
+
+            // 6h Data
+            const item6h = sixH[id];
+            const avg6h = item6h?.avgHighPrice || 0;
+            const highVol6h = item6h?.highPriceVolume || 0;
+            const lowVol6h = item6h?.lowPriceVolume || 0;
+
+            // 24h Data
+            const item24h = twentyFourH[id];
+            const avg24h = item24h?.avgHighPrice || 0;
+            const highVol24h = item24h?.highPriceVolume || 0;
+            const lowVol24h = item24h?.lowPriceVolume || 0;
 
             // Only include raw data from API
             results.push({
                 id,
                 name: item.name,
                 members: item.members,
-                limit: limit !== undefined ? limit : "-",
-                highalch: item.highalch || null,
+                limit: limit !== undefined ? limit : 0,
+                highalch: item.highalch || 0,
                 low,
                 lowTime,
                 high,
@@ -111,6 +129,12 @@ export async function fetchFlippingData(): Promise<ProcessedItem[]> {
                 avg1h,
                 highVol1h,
                 lowVol1h,
+                avg6h,
+                highVol6h,
+                lowVol6h,
+                avg24h,
+                highVol24h,
+                lowVol24h,
             });
         }
 

@@ -1,3 +1,5 @@
+"use client";
+
 import { TimeSeriesData } from "../types";
 import { saveTimeseries, getTimeseries, isExpired as checkExpired, cleanup, getLastCleanup, setLastCleanup } from "./indexeddb";
 
@@ -77,7 +79,7 @@ export class TimeseriesCache {
             return cached;
         }
         // Check IndexedDB (5‑minute throttling)
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && window.indexedDB) {
             try {
                 const expired = await checkExpired(itemId, interval);
                 if (!expired) {
@@ -156,7 +158,7 @@ export class TimeseriesCache {
                         const fetchedAt = Date.now();
                         const expiresAt = fetchedAt + this.DEFAULT_TTL;
                         this.cache.set(key, { data, fetchedAt, expiresAt });
-                        if (typeof window !== 'undefined') {
+                        if (typeof window !== 'undefined' && window.indexedDB) {
                             try { await saveTimeseries(entry.itemId, interval, data, fetchedAt); } catch (e) { console.error('IndexedDB save error:', e); }
                         }
                         const queued = this.queue.get(key) || [];
@@ -209,7 +211,7 @@ export class TimeseriesCache {
     }
 
     private async scheduleCleanup(): Promise<void> {
-        if (typeof window === 'undefined') return;
+        if (typeof window === 'undefined' || !window.indexedDB) return;
         try {
             const last = await getLastCleanup();
             const now = Date.now();

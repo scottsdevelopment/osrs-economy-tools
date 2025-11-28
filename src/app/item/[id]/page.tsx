@@ -1,5 +1,6 @@
 import { fetchItemData } from "@/lib/api";
 import ItemDetails from "@/components/ItemDetails";
+import { FavoritesProvider } from "@/context/FavoritesContext";
 
 export const revalidate = 60;
 
@@ -23,7 +24,9 @@ export default async function ItemPage({ params }: PageProps) {
 
     return (
         <main>
-            <ItemDetails item={data.mapping} price={data.price} volume={data.volume} />
+            <FavoritesProvider>
+                <ItemDetails item={data.mapping} price={data.price} volume={data.volume} />
+            </FavoritesProvider>
         </main>
     );
 }

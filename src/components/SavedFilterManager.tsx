@@ -1,9 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronDown, ChevronUp, Plus, Edit2, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Edit2, Trash2, Code, Sparkles } from "lucide-react";
 import { SavedFilter } from "@/lib/filters/types";
 import FilterBuilder from "./FilterBuilder";
+import SimpleFilterBuilder from "./SimpleFilterBuilder";
+import { ProcessedItem } from "@/lib/types";
+import { CustomColumn } from "@/lib/columns/types";
+import { translateSimpleFilter, SimpleCondition, parseAdvancedFilter } from "@/lib/filters/translator";
 
 interface SavedFilterManagerProps {
     filters: SavedFilter[];
@@ -11,6 +15,9 @@ interface SavedFilterManagerProps {
     onAddFilter: (filter: SavedFilter) => void;
     onDeleteFilter: (id: string) => void;
     onToggleFilter: (id: string) => void;
+    items?: ProcessedItem[];
+    columns?: CustomColumn[];
+    onPreviewFilter?: (filter: SavedFilter | null) => void;
 }
 
 export default function SavedFilterManager({
@@ -19,10 +26,29 @@ export default function SavedFilterManager({
     onAddFilter,
     onDeleteFilter,
     onToggleFilter,
+    items = [],
+    columns = [],
+    onPreviewFilter,
 }: SavedFilterManagerProps) {
-    const [isExpanded, setIsExpanded] = useState(true);
-    const [isBuilderOpen, setIsBuilderOpen] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
     const [editingFilter, setEditingFilter] = useState<SavedFilter | undefined>(undefined);
+    const [builderMode, setBuilderMode] = useState<"simple" | "advanced">("simple");
+
+    // Shared state
+    const [filterName, setFilterName] = useState("");
+    const [category, setCategory] = useState("Custom");
+    const [description, setDescription] = useState("");
+    const [translationWarning, setTranslationWarning] = useState<string | null>(null);
+
+    // Simple builder state
+    const [simpleConditions, setSimpleConditions] = useState<SimpleCondition[]>([
+        { field: "", operator: ">", value: "", valueType: "number" }
+    ]);
+    const [logic, setLogic] = useState<"AND" | "OR">("AND");
+    const [nameManuallyChanged, setNameManuallyChanged] = useState(false);
+
+    // Advanced builder state
+    const [advancedCode, setAdvancedCode] = useState<string>("");
 
     // Group filters
     const groupedFilters = filters.reduce((acc, filter) => {
@@ -36,20 +62,117 @@ export default function SavedFilterManager({
 
     const handleEdit = (filter: SavedFilter) => {
         setEditingFilter(filter);
-        setIsBuilderOpen(true);
-    };
+        setFilterName(filter.name);
+        setCategory(filter.category);
+        setDescription(filter.description || "");
 
-    const handleAdd = () => {
-        setEditingFilter(undefined);
-        setIsBuilderOpen(true);
-    };
+        // If it has expressions, try to load into advanced mode
+        if (filter.expressions && filter.expressions.length > 0) {
+            const code = filter.expressions.map(e => e.code).join(" and ");
+            setAdvancedCode(code);
 
-    const handleSave = (filter: SavedFilter) => {
-        if (editingFilter) {
-            onUpdateFilter(filter);
+            // Also try to parse into simple conditions so we can switch back if needed
+            const parsed = parseAdvancedFilter(code);
+            if (parsed && parsed.conditions.length > 0) {
+                setSimpleConditions(parsed.conditions);
+                setLogic(parsed.logic);
+
+                if (parsed.failedCount > 0) {
+                    setTranslationWarning(`${parsed.failedCount} advanced expression(s) could not be translated to simple mode.`);
+                } else {
+                    setTranslationWarning(null);
+                }
+
+                // If successfully parsed (at least partially), default to simple mode for better UX
+                setBuilderMode("simple");
+            } else {
+                // If complex (all failed), force advanced mode and reset simple conditions
+                setSimpleConditions([{ field: "", operator: ">", value: "", valueType: "number" }]);
+                setBuilderMode("advanced");
+                setTranslationWarning(null);
+            }
         } else {
-            onAddFilter(filter);
+            // No expressions, default to simple
+            setBuilderMode("simple");
         }
+
+        // Mark name as manually changed so it doesn't get overwritten by auto-generation
+        setNameManuallyChanged(true);
+    };
+
+    const handleToggleMode = () => {
+        if (builderMode === "simple") {
+            // Convert simple to advanced
+            try {
+                const validConditions = simpleConditions.filter(c => c.field && c.value !== "");
+                if (validConditions.length > 0) {
+                    const expression = translateSimpleFilter(validConditions, logic);
+                    setAdvancedCode(expression.code);
+                }
+            } catch (error) {
+                console.error("Error converting to advanced:", error);
+            }
+            setBuilderMode("advanced");
+        } else {
+            // Switch to simple - try to parse advanced code back
+            if (advancedCode) {
+                const parsed = parseAdvancedFilter(advancedCode);
+                if (parsed && parsed.conditions.length > 0) {
+                    setSimpleConditions(parsed.conditions);
+                    setLogic(parsed.logic);
+                    if (parsed.failedCount > 0) {
+                        setTranslationWarning(`${parsed.failedCount} advanced expression(s) could not be translated to simple mode.`);
+                    } else {
+                        setTranslationWarning(null);
+                    }
+                } else {
+                    // If parsing fails completely
+                    setSimpleConditions([{ field: "", operator: ">", value: "", valueType: "number" }]);
+                    setTranslationWarning("Could not translate advanced filter to simple mode.");
+                }
+            }
+            setBuilderMode("simple");
+        }
+    };
+
+    const handleSaveAdvanced = (filter: SavedFilter) => {
+        // Ensure shared state is used if not provided in filter (though FilterBuilder should provide it)
+        const finalFilter = {
+            ...filter,
+            name: filterName || filter.name,
+            category: category || filter.category,
+            description: description || filter.description
+        };
+
+        if (editingFilter) {
+            onUpdateFilter(finalFilter);
+            setEditingFilter(undefined);
+        } else {
+            onAddFilter(finalFilter);
+        }
+        // Reset state
+        resetState();
+    };
+
+    const handleSaveSimple = (filter: SavedFilter) => {
+        onAddFilter(filter);
+        resetState();
+    };
+
+    const handleCancelEdit = () => {
+        setEditingFilter(undefined);
+        resetState();
+    };
+
+    const resetState = () => {
+        setFilterName("");
+        setCategory("Custom");
+        setDescription("");
+        setSimpleConditions([{ field: "", operator: ">", value: "", valueType: "number" }]);
+        setLogic("AND");
+        setNameManuallyChanged(false);
+        setAdvancedCode("");
+        setTranslationWarning(null);
     };
 
     return (
@@ -59,7 +182,7 @@ export default function SavedFilterManager({
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="w-full px-4 py-3 bg-osrs-button text-[#2c1e12] font-header font-bold flex items-center justify-between hover:bg-osrs-button-hover transition-colors"
             >
-                <span>Saved Filters</span>
+                <span>Filters</span>
                 {isExpanded ? (
                     <ChevronUp className="w-5 h-5" />
                 ) : (
@@ -68,70 +191,144 @@ export default function SavedFilterManager({
             </button>
 
             {/* Content */}
-            {isExpanded && (
+            <div
+                className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
+                    }`}
+            >
                 <div className="p-4">
-                    <div className="flex justify-between items-center mb-4 pb-4 border-b-2 border-osrs-border">
-                        <div className="text-sm text-osrs-text">
-                            Enable filters to refine your search.
+                    {/* 33/66 Split Layout */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Left Column: Filter Builder (33%) */}
+                        <div className="lg:col-span-1 border-r border-osrs-border pr-6">
+                            {/* Mode Toggle */}
+                            <div className="flex items-center justify-between pb-3 border-b border-osrs-border mb-4">
+                                <h3 className="font-header font-bold text-osrs-text">Create Filter</h3>
+                                <button
+                                    onClick={handleToggleMode}
+                                    className="flex items-center gap-1 px-2 py-1 text-xs font-bold bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+                                    title={builderMode === "simple" ? "Switch to Advanced (Code)" : "Switch to Simple (Visual)"}
+                                >
+                                    {builderMode === "simple" ? (
+                                        <>
+                                            <Code className="w-3 h-3" />
+                                            Advanced
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles className="w-3 h-3" />
+                                            Simple
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+
+                            {/* Translation Warning */}
+                            {translationWarning && builderMode === "simple" && (
+                                <div className="mb-4 p-3 bg-osrs-input border border-osrs-accent text-osrs-primary rounded text-sm font-bold">
+                                    {translationWarning}
+                                </div>
+                            )}
+
+                            {/* Builder Content */}
+                            {builderMode === "simple" ? (
+                                <SimpleFilterBuilder
+                                    items={items}
+                                    columns={columns}
+                                    onSave={handleSaveSimple}
+                                    onPreview={onPreviewFilter}
+                                    // Controlled props
+                                    conditions={simpleConditions}
+                                    setConditions={setSimpleConditions}
+                                    logic={logic}
+                                    setLogic={setLogic}
+                                    filterName={filterName}
+                                    setFilterName={setFilterName}
+                                    category={category}
+                                    setCategory={setCategory}
+                                    description={description}
+                                    setDescription={setDescription}
+                                    nameManuallyChanged={nameManuallyChanged}
+                                    setNameManuallyChanged={setNameManuallyChanged}
+                                />
+                            ) : (
+                                <FilterBuilder
+                                    isOpen={true}
+                                    onClose={() => { }} // Not used in inline mode
+                                    onSave={handleSaveAdvanced}
+                                    initialFilter={editingFilter}
+                                    inline={true}
+                                    initialCode={advancedCode}
+                                    // Controlled props
+                                    filterName={filterName}
+                                    setFilterName={setFilterName}
+                                    category={category}
+                                    setCategory={setCategory}
+                                    description={description}
+                                    setDescription={setDescription}
+                                    onCodeChange={setAdvancedCode}
+                                    onPreview={onPreviewFilter}
+                                    items={items}
+                                    columns={columns}
+                                />
+                            )}
                         </div>
-                        <button
-                            onClick={handleAdd}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-osrs-accent text-white font-bold text-sm rounded hover:bg-osrs-accent/90 transition-colors"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Add Custom Filter
-                        </button>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {Object.entries(groupedFilters).map(([groupName, groupFilters]) => (
-                            <div key={groupName} className="space-y-2">
-                                <h3 className="text-sm font-header font-bold text-osrs-text border-b border-osrs-border pb-1">
-                                    {groupName}
-                                </h3>
-                                {groupFilters.map((filter) => (
-                                    <div key={filter.id} className="flex items-center justify-between group">
-                                        <label className="flex items-center gap-2 text-sm text-osrs-text font-body cursor-pointer hover:text-osrs-accent transition-colors flex-1">
-                                            <input
-                                                type="checkbox"
-                                                checked={filter.enabled}
-                                                onChange={() => onToggleFilter(filter.id)}
-                                                className="w-4 h-4 cursor-pointer accent-osrs-accent"
-                                            />
-                                            <span title={filter.description}>{filter.name}</span>
-                                        </label>
+                        {/* Right Column: Filter List (66%) */}
+                        <div className="lg:col-span-2">
+                            <div className="flex justify-between items-center pb-4 border-b-2 border-osrs-border mb-4">
+                                <h3 className="font-header font-bold text-osrs-text">Apply Filters</h3>
+                                <div className="text-sm text-osrs-text">
+                                    {filters.filter((f) => f.enabled).length} active
+                                </div>
+                            </div>
 
-
-                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                onClick={() => handleEdit(filter)}
-                                                className="p-1 text-gray-500 hover:text-osrs-accent"
-                                                title="Edit"
+                            {/* 2-Column Grid for Filters */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 max-h-[500px] overflow-y-auto pr-2">
+                                {Object.entries(groupedFilters).map(([groupName, groupFilters]) => (
+                                    <div key={groupName} className="space-y-2">
+                                        <h4 className="text-sm font-header font-bold text-osrs-text border-b border-osrs-border pb-1">
+                                            {groupName}
+                                        </h4>
+                                        {groupFilters.map((filter) => (
+                                            <div
+                                                key={filter.id}
+                                                className="flex items-center justify-between group hover:bg-white/50 p-2 rounded transition-colors"
                                             >
-                                                <Edit2 className="w-3 h-3" />
-                                            </button>
-                                            <button
-                                                onClick={() => onDeleteFilter(filter.id)}
-                                                className="p-1 text-gray-500 hover:text-red-600"
-                                                title="Delete"
-                                            >
-                                                <Trash2 className="w-3 h-3" />
-                                            </button>
-                                        </div>
+                                                <label className="flex items-center gap-2 text-sm text-osrs-text font-body cursor-pointer hover:text-osrs-accent transition-colors flex-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={filter.enabled}
+                                                        onChange={() => onToggleFilter(filter.id)}
+                                                        className="w-4 h-4 cursor-pointer accent-osrs-accent"
+                                                    />
+                                                    <span title={filter.description}>{filter.name}</span>
+                                                </label>
+
+                                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={() => handleEdit(filter)}
+                                                        className="p-1 text-gray-500 hover:text-osrs-accent"
+                                                        title="Edit"
+                                                    >
+                                                        <Edit2 className="w-3 h-3" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => onDeleteFilter(filter.id)}
+                                                        className="p-1 text-gray-500 hover:text-red-600"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 className="w-3 h-3" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 ))}
                             </div>
-                        ))}
+                        </div>
                     </div>
                 </div>
-            )}
-
-            <FilterBuilder
-                isOpen={isBuilderOpen}
-                onClose={() => setIsBuilderOpen(false)}
-                onSave={handleSave}
-                initialFilter={editingFilter}
-            />
+            </div>
         </div>
     );
 }

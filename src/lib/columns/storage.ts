@@ -12,6 +12,16 @@ export async function loadColumns(): Promise<CustomColumn[]> {
         return PRESET_COLUMNS;
     }
 
+    // Merge in any new presets that aren't in saved
+    const savedIds = new Set(saved.map(c => c.id));
+    const newPresets = PRESET_COLUMNS.filter(c => !savedIds.has(c.id));
+
+    if (newPresets.length > 0) {
+        const merged = [...saved, ...newPresets];
+        await saveColumns(merged);
+        return merged;
+    }
+
     return saved;
 }
 
@@ -35,8 +45,11 @@ export async function updateColumn(id: string, updates: Partial<CustomColumn>): 
 
 export async function deleteColumn(id: string): Promise<CustomColumn[]> {
     // Check dependencies first
+    // Check dependencies first
     const filters = await loadFilters();
-    const dependentFilters = filters.filter(f => JSON.stringify(f.rule).includes(`columns.${id}`));
+    const dependentFilters = filters.filter(f =>
+        f.expressions.some(expr => expr.code.includes(`columns.${id}`) || expr.highlightItem?.includes(`columns.${id}`))
+    );
 
     if (dependentFilters.length > 0) {
         throw new Error(`Cannot delete column. It is used by filters: ${dependentFilters.map(f => f.name).join(", ")}`);

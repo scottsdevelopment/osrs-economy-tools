@@ -186,7 +186,7 @@ export default function AlchemyCalculator({ items }: AlchemyCalculatorProps) {
                         <p className="my-2 p-2 bg-osrs-input rounded"><strong className="text-osrs-accent">Leftover:</strong> <span>{results ? results.leftoverCapital.toLocaleString() : "-"}</span> GP</p>
                         <p className="my-2 p-2 bg-osrs-input rounded">
                             <strong className="text-osrs-accent">Profit:</strong>{" "}
-                            <span className={results ? (results.profit >= 0 ? "text-[#014cc0]" : "text-[#c02614]") : ""}>
+                            <span className={results ? (results.profit >= 0 ? "text-osrs-profit" : "text-osrs-loss") : ""}>
                                 {results ? results.profit.toLocaleString() : "-"}
                             </span>{" "}
                             GP
@@ -209,7 +209,7 @@ export default function AlchemyCalculator({ items }: AlchemyCalculatorProps) {
                                 <p className="my-1">Leftover: {entry.leftoverCapital.toLocaleString()} GP</p>
                                 <p className="my-1">
                                     Profit:{" "}
-                                    <span className={entry.profit >= 0 ? "text-[#014cc0]" : "text-[#c02614]"}>
+                                    <span className={entry.profit >= 0 ? "text-osrs-profit" : "text-osrs-loss"}>
                                         {entry.profit.toLocaleString()} GP
                                     </span>
                                 </p>

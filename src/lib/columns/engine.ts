@@ -41,7 +41,8 @@ export function evaluateColumn(
     allColumns: CustomColumn[] = [],
     cache?: TimeseriesCache,
     onUpdate?: () => void,
-    depth = 0
+    depth = 0,
+    allItems: any[] = [] // Added allItems for cross-referencing
 ): any {
     if (depth > 10) {
         console.warn(`Circular dependency detected for column ${column.name}`);
@@ -61,7 +62,7 @@ export function evaluateColumn(
                 if (typeof prop === "string") {
                     const depCol = allColumns.find(c => c.id === prop);
                     if (depCol) {
-                        return evaluateColumn(depCol, context, allColumns, cache, onUpdate, depth + 1);
+                        return evaluateColumn(depCol, context, allColumns, cache, onUpdate, depth + 1, allItems);
                     }
                 }
                 return undefined;
@@ -74,11 +75,20 @@ export function evaluateColumn(
             return cache.getSync(itemId, interval);
         };
 
+        // Helper for cross-item lookup
+        const getItemFunc = (idOrName: number | string) => {
+            if (typeof idOrName === 'number') {
+                return allItems.find(i => i.id === idOrName);
+            }
+            return allItems.find(i => i.name === idOrName);
+        };
+
         // Extend context with columns proxy and timeseries function
         const evalContext = {
             ...context,
             columns: columnsProxy,
             timeseries: timeseriesFunc,
+            getItem: getItemFunc,
             now: Math.floor(Date.now() / 1000)
         };
 
@@ -109,7 +119,7 @@ export function formatColumnValue(value: any, column: CustomColumn): string {
             case "currency":
                 return num.toLocaleString();
             case "percentage":
-                return `${num.toFixed(2)}%`;
+                return `${(100 * num).toFixed(2)}%`;
             case "decimal":
                 return num.toFixed(2);
             case "relativeTime": {

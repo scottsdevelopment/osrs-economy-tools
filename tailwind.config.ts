@@ -18,6 +18,8 @@ const config: Config = {
                 "osrs-button": "#b8a282",
                 "osrs-button-hover": "#d0bd97",
                 "osrs-border": "#94866d",
+                "osrs-profit": "#014cc0",
+                "osrs-loss": "#c02614",
             },
             fontFamily: {
                 main: ["Inter", "sans-serif"],

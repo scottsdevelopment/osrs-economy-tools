@@ -10,7 +10,15 @@ export async function loadFilters(): Promise<SavedFilter[]> {
         return PRESET_FILTERS;
     }
 
-    return saved;
+    // Migration: Ensure all filters have expressions array
+    const migrated = saved.map(f => {
+        if (!f.expressions) {
+            return { ...f, expressions: [] };
+        }
+        return f;
+    });
+
+    return migrated;
 }
 
 export async function saveFilters(filters: SavedFilter[]): Promise<void> {

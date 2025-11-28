@@ -1,3 +1,5 @@
+"use client";
+
 import { TimeSeriesData } from "../types";
 
 const DB_NAME = "osrs-timeseries-cache";
@@ -20,13 +22,13 @@ let dbInstance: IDBDatabase | null = null;
  * Open or create the IndexedDB database
  */
 export async function openDB(): Promise<IDBDatabase> {
-    if (typeof window === 'undefined') {
-        throw new Error("IndexedDB is not available on the server");
+    if (typeof window === 'undefined' || !window.indexedDB) {
+        throw new Error("IndexedDB is not available");
     }
     if (dbInstance) return dbInstance;
 
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        const request = window.indexedDB.open(DB_NAME, DB_VERSION);
 
         request.onerror = () => reject(request.error);
         request.onsuccess = () => {

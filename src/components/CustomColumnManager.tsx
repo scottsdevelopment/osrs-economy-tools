@@ -65,7 +65,7 @@ export default function CustomColumnManager({
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="w-full px-4 py-3 bg-osrs-button text-[#2c1e12] font-header font-bold flex items-center justify-between hover:bg-osrs-button-hover transition-colors"
             >
-                <span>Manage Columns</span>
+                <span>Columns</span>
                 {isExpanded ? (
                     <ChevronUp className="w-5 h-5" />
                 ) : (
@@ -73,7 +73,10 @@ export default function CustomColumnManager({
                 )}
             </button>
 
-            {isExpanded && (
+            <div
+                className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
+                    }`}
+            >
                 <div className="p-4">
                     <div className="flex justify-between items-center mb-4 pb-4 border-b-2 border-osrs-border">
                         <div className="text-sm text-osrs-text">
@@ -128,7 +131,7 @@ export default function CustomColumnManager({
                         ))}
                     </div>
                 </div>
-            )}
+            </div>
 
             <ColumnBuilder
                 isOpen={isBuilderOpen}
