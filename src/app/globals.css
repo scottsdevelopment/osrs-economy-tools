@@ -13,6 +13,23 @@
   --color-osrs-profit: #014cc0;
   --color-osrs-loss: #c02614;
 
+  /* Additional theme colors */
+  --color-osrs-text-light: #f5e6d3;
+  --color-osrs-text-dark: #2c1e12;
+  --color-osrs-text-muted: #666;
+  --color-osrs-secondary: #e9e4d4;
+  --color-osrs-secondary-hover: #d8ccb4;
+  --color-osrs-table-even: #dfd5c1;
+  --color-osrs-table-hover: #f0e6d2;
+  --color-osrs-tooltip-bg: #2c1e12;
+  --color-osrs-dropdown-bg: #2b2520;
+  --color-osrs-border-light: #c9bca0;
+  --color-osrs-border-dark: #3e2616;
+  --color-osrs-primary-hover: #7a4d2b;
+  --color-osrs-success: #28a745;
+  --color-osrs-nav-inactive: #d1c6a6;
+  --color-osrs-icon-accent: #c5a465;
+
   --font-main: 'Inter', sans-serif;
   --font-header: 'Cinzel', serif;
 }
@@ -49,7 +66,7 @@ h1 {
 
 @layer components {
   .btn-primary {
-    @apply bg-osrs-primary text-[#f5e6d3] px-5 py-2.5 border border-[#3e2616] rounded font-header font-bold cursor-pointer transition-all shadow-sm hover:bg-[#7a4d2b] hover:-translate-y-px hover:shadow-md active:translate-y-0 active:shadow-sm;
+    @apply bg-osrs-primary text-osrs-text-light px-5 py-2.5 border border-osrs-border-dark rounded font-header font-bold cursor-pointer transition-all shadow-sm hover:bg-osrs-primary-hover hover:-translate-y-px hover:shadow-md active:translate-y-0 active:shadow-sm;
   }
 }
 

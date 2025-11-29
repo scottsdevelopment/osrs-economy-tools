@@ -43,7 +43,7 @@ export default function ColumnToggle({
             {/* Header */}
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full px-4 py-3 bg-osrs-button text-[#2c1e12] font-header font-bold flex items-center justify-between hover:bg-osrs-button-hover transition-colors"
+                className="w-full px-4 py-3 bg-osrs-button text-osrs-text-dark font-header font-bold flex items-center justify-between hover:bg-osrs-button-hover transition-colors"
             >
                 <span>Toggle Columns</span>
                 {isExpanded ? (
@@ -61,20 +61,20 @@ export default function ColumnToggle({
                         <button
                             onClick={() => onToggleAll(true)}
                             disabled={allVisible}
-                            className="px-3 py-1.5 bg-osrs-button text-[#2c1e12] font-body text-sm rounded border-2 border-osrs-border hover:bg-osrs-button-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="px-3 py-1.5 bg-osrs-button text-osrs-text-dark font-body text-sm rounded border-2 border-osrs-border hover:bg-osrs-button-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                             Select All
                         </button>
                         <button
                             onClick={() => onToggleAll(false)}
                             disabled={noneVisible}
-                            className="px-3 py-1.5 bg-osrs-button text-[#2c1e12] font-body text-sm rounded border-2 border-osrs-border hover:bg-osrs-button-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="px-3 py-1.5 bg-osrs-button text-osrs-text-dark font-body text-sm rounded border-2 border-osrs-border hover:bg-osrs-button-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                             Deselect All
                         </button>
                         <button
                             onClick={onResetToDefault}
-                            className="px-3 py-1.5 bg-osrs-button text-[#2c1e12] font-body text-sm rounded border-2 border-osrs-border hover:bg-osrs-button-hover transition-colors"
+                            className="px-3 py-1.5 bg-osrs-button text-osrs-text-dark font-body text-sm rounded border-2 border-osrs-border hover:bg-osrs-button-hover transition-colors"
                         >
                             Reset to Default
                         </button>

@@ -46,7 +46,7 @@ export default function Pagination({
                 <button
                     onClick={() => onPageChange(1)}
                     disabled={currentPage === 1}
-                    className="px-2 py-2 bg-osrs-button text-[#2c1e12] font-header font-bold rounded border-2 border-osrs-border hover:bg-osrs-button-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-2 py-2 bg-osrs-button text-osrs-text-dark font-header font-bold rounded border-2 border-osrs-border hover:bg-osrs-button-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     aria-label="First page"
                 >
                     <ChevronsLeft className="w-4 h-4" />
@@ -55,7 +55,7 @@ export default function Pagination({
                 <button
                     onClick={() => onPageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="px-3 py-2 bg-osrs-button text-[#2c1e12] font-header font-bold rounded border-2 border-osrs-border hover:bg-osrs-button-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-2 bg-osrs-button text-osrs-text-dark font-header font-bold rounded border-2 border-osrs-border hover:bg-osrs-button-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     aria-label="Previous page"
                 >
                     <ChevronLeft className="w-4 h-4" />
@@ -69,7 +69,7 @@ export default function Pagination({
                 <button
                     onClick={() => onPageChange(currentPage + 1)}
                     disabled={currentPage === totalPages || totalPages === 0}
-                    className="px-3 py-2 bg-osrs-button text-[#2c1e12] font-header font-bold rounded border-2 border-osrs-border hover:bg-osrs-button-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-2 bg-osrs-button text-osrs-text-dark font-header font-bold rounded border-2 border-osrs-border hover:bg-osrs-button-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     aria-label="Next page"
                 >
                     <ChevronRight className="w-4 h-4" />
@@ -78,7 +78,7 @@ export default function Pagination({
                 <button
                     onClick={() => onPageChange(totalPages)}
                     disabled={currentPage === totalPages || totalPages === 0}
-                    className="px-2 py-2 bg-osrs-button text-[#2c1e12] font-header font-bold rounded border-2 border-osrs-border hover:bg-osrs-button-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-2 py-2 bg-osrs-button text-osrs-text-dark font-header font-bold rounded border-2 border-osrs-border hover:bg-osrs-button-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     aria-label="Last page"
                 >
                     <ChevronsRight className="w-4 h-4" />

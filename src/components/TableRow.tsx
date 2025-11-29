@@ -4,13 +4,14 @@ import React, { useState, memo, useEffect } from "react";
 import Link from "next/link";
 import { ProcessedItem } from "@/lib/types";
 import { getItemImageUrl } from "@/lib/api";
+import { generateSlug } from "@/lib/slug";
 import { ImageOff } from "lucide-react";
 import { CustomColumn } from "@/lib/columns/types";
 import { evaluateColumn, formatColumnValue } from "@/lib/columns/engine";
 import { TimeseriesCache } from "@/lib/timeseries/cache";
 import { Spinner } from "./Spinner";
 import { NON_MEMBER_ICON, MEMBER_ICON } from "@/lib/constants/icons";
-import { useFavorites } from "@/context/FavoritesContext";
+import { useFavoritesStore } from "@/stores/useFavoritesStore";
 import { Heart } from "lucide-react";
 
 interface ItemImageProps {
@@ -23,8 +24,8 @@ const ItemImage = memo(({ name }: ItemImageProps) => {
 
     if (error) {
         return (
-            <div className="w-6 h-6 flex items-center justify-center bg-[#c0a886] rounded-full" title={name}>
-                <ImageOff className="w-4 h-4 text-[#5a3820] opacity-60" />
+            <div className="w-6 h-6 flex items-center justify-center bg-osrs-bg rounded-full" title={name}>
+                <ImageOff className="w-4 h-4 text-osrs-primary opacity-60" />
             </div>
         );
     }
@@ -53,7 +54,8 @@ const TableRow = memo(({ item, columns, cache, action, showActionColumn }: Table
     const enabledColumns = React.useMemo(() => columns.filter(c => c.enabled), [columns]);
     const [loadingColumns, setLoadingColumns] = useState<Set<string>>(new Set());
     const [updateTrigger, setUpdateTrigger] = useState(0);
-    const { isFavorite, toggleFavorite } = useFavorites();
+    const isFavorite = useFavoritesStore(state => state.isFavorite);
+    const toggleFavorite = useFavoritesStore(state => state.toggleFavorite);
 
     // Subscribe to this item's timeseries updates
     useEffect(() => {
@@ -111,11 +113,9 @@ const TableRow = memo(({ item, columns, cache, action, showActionColumn }: Table
     }, [item.id, cache, enabledColumns]);
 
     return (
-        <tr className="even:bg-[#dfd5c1] hover:bg-[#f0e6d2] transition-colors">
-
-
+        <tr className="even:bg-osrs-table-even hover:bg-osrs-table-hover transition-colors">
             {showActionColumn && (
-                <td className="p-3 border-b border-[#c9bca0]">
+                <td className="p-3 border-b border-osrs-border-light">
                     {action && (
                         <span className="inline-block px-2 py-1 text-xs font-bold text-white bg-osrs-accent rounded shadow-sm">
                             {action}
@@ -132,18 +132,18 @@ const TableRow = memo(({ item, columns, cache, action, showActionColumn }: Table
                 if (col.id === "name") {
                     return (
                         <React.Fragment key={col.id}>
-                            <td className="p-3 border-b border-[#c9bca0] w-10">
+                            <td className="p-3 border-b border-osrs-border-light w-10">
                                 <Link
-                                    href={`/item/${item.id}`}
+                                    href={`/item/${generateSlug(item.name)}`}
                                     target="_blank"
                                     className="w-6 h-6 flex items-center justify-center text-inherit no-underline"
                                 >
                                     <ItemImage name={item.name} />
                                 </Link>
                             </td>
-                            <td className="p-3 border-b border-[#c9bca0]">
+                            <td className="p-3 border-b border-osrs-border-light">
                                 <Link
-                                    href={`/item/${item.id}`}
+                                    href={`/item/${generateSlug(item.name)}`}
                                     target="_blank"
                                     className="text-inherit no-underline hover:underline font-medium"
                                 >
@@ -157,7 +157,7 @@ const TableRow = memo(({ item, columns, cache, action, showActionColumn }: Table
                 if (col.id === "favorite") {
                     const favorite = isFavorite(item.id);
                     return (
-                        <td key={col.id} className="p-3 border-b border-[#c9bca0]">
+                        <td key={col.id} className="p-3 border-b border-osrs-border-light">
                             <button
                                 onClick={(e) => {
                                     e.preventDefault();
@@ -178,7 +178,7 @@ const TableRow = memo(({ item, columns, cache, action, showActionColumn }: Table
                     const numVal = Number(value);
                     const colorClass = numVal >= 0 ? "text-osrs-profit font-bold" : "text-osrs-loss font-bold";
                     return (
-                        <td key={col.id} className="p-3 border-b border-[#c9bca0]">
+                        <td key={col.id} className="p-3 border-b border-osrs-border-light">
                             {isLoading ? (
                                 <Spinner size="sm" />
                             ) : (
@@ -190,7 +190,7 @@ const TableRow = memo(({ item, columns, cache, action, showActionColumn }: Table
 
                 if (col.id === "members") {
                     return (
-                        <td key={col.id} className="p-3 border-b border-[#c9bca0]">
+                        <td key={col.id} className="p-3 border-b border-osrs-border-light">
                             <div className="flex items-center justify-center">
                                 <img
                                     src={item.members ? MEMBER_ICON : NON_MEMBER_ICON}
@@ -204,7 +204,7 @@ const TableRow = memo(({ item, columns, cache, action, showActionColumn }: Table
 
                 if (col.id === "low") {
                     return (
-                        <td key={col.id} className="p-3 border-b border-[#c9bca0] align-middle">
+                        <td key={col.id} className="p-3 border-b border-osrs-border-light align-middle">
                             {isLoading ? (
                                 <Spinner size="sm" />
                             ) : (
@@ -216,7 +216,7 @@ const TableRow = memo(({ item, columns, cache, action, showActionColumn }: Table
 
                 if (col.id === "high") {
                     return (
-                        <td key={col.id} className="p-3 border-b border-[#c9bca0] align-middle">
+                        <td key={col.id} className="p-3 border-b border-osrs-border-light align-middle">
                             {isLoading ? (
                                 <Spinner size="sm" />
                             ) : (
@@ -227,7 +227,7 @@ const TableRow = memo(({ item, columns, cache, action, showActionColumn }: Table
                 }
 
                 return (
-                    <td key={col.id} className="p-3 border-b border-[#c9bca0]">
+                    <td key={col.id} className="p-3 border-b border-osrs-border-light">
                         {isLoading ? <Spinner size="sm" /> : formatted}
                     </td>
                 );

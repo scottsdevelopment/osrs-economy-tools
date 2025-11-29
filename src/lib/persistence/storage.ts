@@ -39,8 +39,8 @@ class StorageFactory {
 export const storage = StorageFactory.getInstance();
 
 export const STORAGE_KEYS = {
-    COLUMNS: "osrs-flipper-columns-v26",
-    FILTERS: "osrs-flipper-filters-v26",
+    COLUMNS: "osrs-flipper-columns-v1",
+    FILTERS: "osrs-flipper-filters-v1",
     FAVORITES: "osrs-flipper-favorites-v1",
     SETUP_VERSION: "osrs-flipper-setup-v1",
 } as const;

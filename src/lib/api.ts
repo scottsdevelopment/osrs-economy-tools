@@ -1,4 +1,5 @@
 import { ItemMapping, ProcessedItem, PriceData, TimeSeriesData } from "./types";
+import { findItemBySlugOrId } from "./slug";
 
 const API_BASE = "https://prices.runescape.wiki/api/v1/osrs";
 const API_LATEST = `${API_BASE}/latest`;
@@ -9,6 +10,10 @@ const API_24H = `${API_BASE}/24h`;
 const API_MAPPING = `${API_BASE}/mapping`;
 const API_VOLUMES = `${API_BASE}/volumes`;
 const API_TIMESERIES = `${API_BASE}/timeseries`;
+
+// Module-level cache for mappings (they never change)
+let cachedMappings: ItemMapping[] | null = null;
+let mappingsFetchPromise: Promise<ItemMapping[]> | null = null;
 
 export async function fetchItemData(id: number): Promise<{ mapping: ItemMapping; price: PriceData; volume: number } | null> {
     try {
@@ -39,6 +44,58 @@ export async function fetchItemData(id: number): Promise<{ mapping: ItemMapping;
     }
 }
 
+export async function fetchAllMappings(): Promise<ItemMapping[]> {
+    // Return cached mappings if available
+    if (cachedMappings) {
+        return cachedMappings;
+    }
+
+    // Return existing promise if fetch is in progress
+    if (mappingsFetchPromise) {
+        return mappingsFetchPromise;
+    }
+
+    // Start new fetch
+    mappingsFetchPromise = (async () => {
+        try {
+            const res = await fetch(API_MAPPING, { next: { revalidate: 3600 } });
+            const data = (await res.json()) as ItemMapping[];
+            cachedMappings = data;
+            return data;
+        } catch (err) {
+            console.error("Error fetching mappings:", err);
+            return [];
+        } finally {
+            mappingsFetchPromise = null;
+        }
+    })();
+
+    return mappingsFetchPromise;
+}
+
+export async function fetchItemDataBySlug(slug: string): Promise<{ mapping: ItemMapping; price: PriceData; volume: number } | null> {
+    try {
+        console.log(`Fetching item data for slug: ${slug}`);
+        // 1. Fetch all mappings to find the ID from the slug
+        const mappings = await fetchAllMappings();
+        const item = findItemBySlugOrId(slug, mappings);
+
+        if (!item) {
+            console.log(`Item not found for slug: ${slug}`);
+            return null;
+        }
+
+        console.log(`Found item for slug ${slug}: ${item.name} (ID: ${item.id})`);
+
+        // 2. Once we have the ID, fetch the specific data
+        // We can reuse fetchItemData since we now have the ID
+        return fetchItemData(item.id);
+    } catch (err) {
+        console.error("Error fetching item data by slug:", err);
+        return null;
+    }
+}
+
 export async function fetchTimeSeries(id: number, timestep: string): Promise<TimeSeriesData[]> {
     try {
         const res = await fetch(`${API_TIMESERIES}?timestep=${timestep}&id=${id}`, {
@@ -52,11 +109,10 @@ export async function fetchTimeSeries(id: number, timestep: string): Promise<Tim
     }
 }
 
-export async function fetchFlippingData(): Promise<ProcessedItem[]> {
+export async function fetchFlippingData(): Promise<{ items: ProcessedItem[] }> {
     try {
-        const [latestRes, mappingRes, fiveMRes, oneHRes, sixHRes, twentyFourHRes, volumesRes] = await Promise.all([
+        const [latestRes, fiveMRes, oneHRes, sixHRes, twentyFourHRes, volumesRes] = await Promise.all([
             fetch(API_LATEST, { next: { revalidate: 60 } }),
-            fetch(API_MAPPING, { next: { revalidate: 3600 } }),
             fetch(API_5M, { next: { revalidate: 300 } }),
             fetch(API_1H, { next: { revalidate: 300 } }),
             fetch(API_6H, { next: { revalidate: 3600 } }),
@@ -65,12 +121,14 @@ export async function fetchFlippingData(): Promise<ProcessedItem[]> {
         ]);
 
         const latest = (await latestRes.json()).data as Record<string, PriceData>;
-        const mapping = (await mappingRes.json()) as ItemMapping[];
         const fiveM = (await fiveMRes.json()).data as Record<string, TimeSeriesData>;
         const oneH = (await oneHRes.json()).data as Record<string, TimeSeriesData>;
         const sixH = (await sixHRes.json()).data as Record<string, TimeSeriesData>;
         const twentyFourH = (await twentyFourHRes.json()).data as Record<string, TimeSeriesData>;
         const volumes = (await volumesRes.json()).data as Record<string, number>;
+
+        // Get mappings (cached at module level)
+        const mapping = await fetchAllMappings();
 
         const results: ProcessedItem[] = [];
 
@@ -138,10 +196,10 @@ export async function fetchFlippingData(): Promise<ProcessedItem[]> {
             });
         }
 
-        return results;
+        return { items: results };
     } catch (err) {
         console.error("Error fetching flipping data:", err);
-        return [];
+        return { items: [] };
     }
 }
 

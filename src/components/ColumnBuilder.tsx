@@ -93,10 +93,10 @@ export default function ColumnBuilder({ isOpen, onClose, onSave, initialColumn }
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-osrs-panel border-2 border-osrs-border rounded-lg shadow-2xl w-full max-w-md flex flex-col max-h-[90vh]">
                 <div className="flex justify-between items-center p-4 bg-osrs-button border-b border-osrs-border">
-                    <h2 className="text-lg font-bold text-[#2c1e12] font-header">
+                    <h2 className="text-lg font-bold text-osrs-text-dark font-header">
                         {initialColumn ? "Edit Column" : "New Custom Column"}
                     </h2>
-                    <button onClick={onClose} className="text-[#2c1e12] hover:text-red-600">
+                    <button onClick={onClose} className="text-osrs-text-dark hover:text-red-600">
                         <X className="w-5 h-5" />
                     </button>
                 </div>

@@ -3,10 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { ProcessedItem } from "@/lib/types";
 import ItemSearch from "@/components/ItemSearch";
-
-interface AlchemyCalculatorProps {
-    items: ProcessedItem[];
-}
+import { useItemsStore } from "@/stores/useItemsStore";
 
 interface TradeLogEntry {
     id: number;
@@ -20,7 +17,9 @@ interface TradeLogEntry {
     endingCapital: number;
 }
 
-export default function AlchemyCalculator({ items }: AlchemyCalculatorProps) {
+export default function AlchemyCalculator() {
+    const items = useItemsStore(state => state.items);
+
     const [startingCapital, setStartingCapital] = useState<number>(0);
     const [autoUpdateCapital, setAutoUpdateCapital] = useState(true);
     const [itemPrice, setItemPrice] = useState<number>(9525);
@@ -41,8 +40,8 @@ export default function AlchemyCalculator({ items }: AlchemyCalculatorProps) {
     const handleItemSelect = (item: ProcessedItem) => {
         setItemName(item.name);
         setItemPrice(item.low);
-        if (item.alchValue !== null) {
-            setAlchValue(item.alchValue);
+        if (item.highalch) {
+            setAlchValue(item.highalch);
         }
     };
 
@@ -99,7 +98,7 @@ export default function AlchemyCalculator({ items }: AlchemyCalculatorProps) {
     return (
         <div id="alchemy-tab" className="block">
             <h2>Alchemy Trade Calculator</h2>
-            <div className="max-w-[900px] mx-auto my-8 p-4 bg-[#d8ccb4] rounded-lg shadow-[0_0_8px_rgba(0,0,0,0.3)]">
+            <div className="max-w-[900px] mx-auto my-8 p-4 bg-osrs-secondary-hover rounded-lg shadow-[0_0_8px_rgba(0,0,0,0.3)]">
                 <div className="flex flex-col gap-4 mb-8 p-4 bg-osrs-panel rounded">
                     <h3 className="text-osrs-accent mb-4">Trade Details</h3>
                     <label className="flex flex-col gap-2 text-base">
@@ -199,7 +198,7 @@ export default function AlchemyCalculator({ items }: AlchemyCalculatorProps) {
                     <h3 className="text-osrs-accent mb-4">Trade Log</h3>
                     <div id="trade-log" className="max-h-[400px] overflow-y-auto mb-4 p-4 bg-osrs-input rounded">
                         {log.map((entry) => (
-                            <div key={entry.id} className="mb-4 p-4 bg-[#d8ccb4] rounded border-l-[3px] border-l-osrs-accent">
+                            <div key={entry.id} className="mb-4 p-4 bg-osrs-secondary-hover rounded border-l-[3px] border-l-osrs-accent">
                                 <p><strong className="text-osrs-accent">Trade #{entry.id}</strong></p>
                                 <p className="my-1">Starting Capital: {entry.startingCapital.toLocaleString()} GP</p>
                                 <p className="my-1">Item Price: {entry.itemPrice.toLocaleString()} GP</p>
@@ -222,7 +221,7 @@ export default function AlchemyCalculator({ items }: AlchemyCalculatorProps) {
                         type="button"
                         id="clear-log-btn"
                         onClick={() => setLog([])}
-                        className="bg-[#c02614] text-[#f5e6d3] px-5 py-2 border border-[#3e2616] rounded font-header font-bold cursor-pointer hover:bg-[#c02614] shadow-sm"
+                        className="bg-osrs-loss text-osrs-text-light px-5 py-2 border border-osrs-border-dark rounded font-header font-bold cursor-pointer hover:bg-osrs-loss shadow-sm"
                     >
                         Clear Log
                     </button>

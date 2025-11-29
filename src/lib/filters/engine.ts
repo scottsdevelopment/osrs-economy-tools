@@ -90,7 +90,7 @@ export function evaluateFilter(
             if (expr.highlightItem) {
                 try {
                     // Try to evaluate as an expression first
-                    const result = parser.evaluate(expr.highlightItem, context);
+                    const result = parser.evaluate(expr.highlightItem, context as any);
 
                     // If result is an object (item), use it
                     if (typeof result === 'object' && result !== null && 'id' in (result as any)) {

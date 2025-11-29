@@ -15,8 +15,9 @@ import {
 } from "chart.js";
 import { Line, Bar } from "react-chartjs-2";
 import "chartjs-adapter-date-fns";
-import { fetchTimeSeries } from "@/lib/api";
-import { TimeSeriesData } from "@/lib/types";
+import { useTimeseriesStore } from "@/stores/useTimeseriesStore";
+import { useItemsStore } from "@/stores/useItemsStore";
+import { PriceData, TimeSeriesData } from "@/lib/types";
 
 ChartJS.register(
     CategoryScale,
@@ -32,11 +33,15 @@ ChartJS.register(
 
 interface ItemChartsProps {
     itemId: number;
+    latestPrice: PriceData | null;
 }
 
-export default function ItemCharts({ itemId }: ItemChartsProps) {
+export default function ItemCharts({ itemId, latestPrice }: ItemChartsProps) {
     const [timeRange, setTimeRange] = useState("1d");
     const [data, setData] = useState<TimeSeriesData[]>([]);
+    const getTimeseries = useTimeseriesStore((state) => state.getTimeseries);
+    const invalidateCache = useTimeseriesStore((state) => state.invalidateCache);
+    const lastUpdated = useItemsStore((state) => state.lastUpdated);
 
     useEffect(() => {
         const loadData = async () => {
@@ -45,7 +50,12 @@ export default function ItemCharts({ itemId }: ItemChartsProps) {
             if (timeRange === "30d") timestep = "6h";
             if (timeRange === "1y") timestep = "24h";
 
-            const timeSeries = await fetchTimeSeries(itemId, timestep);
+            // Invalidate cache before fetching to force fresh data
+            if (lastUpdated) {
+                invalidateCache(itemId);
+            }
+
+            const timeSeries = await getTimeseries(itemId, timestep);
 
             // Filter based on range
             const now = Math.floor(Date.now() / 1000);
@@ -56,11 +66,23 @@ export default function ItemCharts({ itemId }: ItemChartsProps) {
             else if (timeRange === "1y") startTime = now - 365 * 24 * 60 * 60;
 
             const filtered = timeSeries.filter((d) => (d.timestamp || 0) >= startTime);
+
+            // Append latest data point if available
+            if (latestPrice && latestPrice.high > 0 && latestPrice.low > 0) {
+                filtered.push({
+                    timestamp: now,
+                    avgHighPrice: latestPrice.high,
+                    avgLowPrice: latestPrice.low,
+                    highPriceVolume: 0,
+                    lowPriceVolume: 0,
+                });
+            }
+
             setData(filtered);
         };
 
         loadData();
-    }, [itemId, timeRange]);
+    }, [itemId, timeRange, getTimeseries, lastUpdated, invalidateCache, latestPrice]);
 
     const labels = data.map((d) => (d.timestamp || 0) * 1000);
 

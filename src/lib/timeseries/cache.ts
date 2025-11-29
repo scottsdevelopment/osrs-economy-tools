@@ -52,7 +52,7 @@ export class TimeseriesCache {
     }
 
     /** Get from in‑memory cache if present and fresh */
-    private async get(itemId: number, interval: string): Promise<TimeSeriesData[] | null> {
+    public async get(itemId: number, interval: string): Promise<TimeSeriesData[] | null> {
         const key = this.getCacheKey(itemId, interval);
         const entry = this.cache.get(key);
         if (entry && Date.now() < entry.expiresAt) {

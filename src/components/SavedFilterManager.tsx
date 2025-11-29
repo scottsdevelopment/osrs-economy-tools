@@ -5,32 +5,31 @@ import { ChevronDown, ChevronUp, Edit2, Trash2, Code, Sparkles } from "lucide-re
 import { SavedFilter } from "@/lib/filters/types";
 import FilterBuilder from "./FilterBuilder";
 import SimpleFilterBuilder from "./SimpleFilterBuilder";
-import { ProcessedItem } from "@/lib/types";
-import { CustomColumn } from "@/lib/columns/types";
 import { translateSimpleFilter, SimpleCondition, parseAdvancedFilter } from "@/lib/filters/translator";
+import { useFiltersStore } from "@/stores/useFiltersStore";
+import { useUIStore } from "@/stores/useUIStore";
+import { useItemsStore } from "@/stores/useItemsStore";
+import { useColumnsStore } from "@/stores/useColumnsStore";
 
 interface SavedFilterManagerProps {
-    filters: SavedFilter[];
-    onUpdateFilter: (filter: SavedFilter) => void;
-    onAddFilter: (filter: SavedFilter) => void;
-    onDeleteFilter: (id: string) => void;
-    onToggleFilter: (id: string) => void;
-    items?: ProcessedItem[];
-    columns?: CustomColumn[];
     onPreviewFilter?: (filter: SavedFilter | null) => void;
 }
 
 export default function SavedFilterManager({
-    filters,
-    onUpdateFilter,
-    onAddFilter,
-    onDeleteFilter,
-    onToggleFilter,
-    items = [],
-    columns = [],
     onPreviewFilter,
 }: SavedFilterManagerProps) {
-    const [isExpanded, setIsExpanded] = useState(false);
+    const filters = useFiltersStore(state => state.savedFilters);
+    const handleAddFilter = useFiltersStore(state => state.handleAddFilter);
+    const handleUpdateFilter = useFiltersStore(state => state.handleUpdateFilter);
+    const handleDeleteFilter = useFiltersStore(state => state.handleDeleteFilter);
+    const handleToggleFilter = useFiltersStore(state => state.handleToggleFilter);
+
+    const items = useItemsStore(state => state.items);
+    const columns = useColumnsStore(state => state.columns);
+
+    const isExpanded = useUIStore(state => state.expandedPanels['filters'] || false);
+    const togglePanel = useUIStore(state => state.togglePanel);
+
     const [editingFilter, setEditingFilter] = useState<SavedFilter | undefined>(undefined);
     const [builderMode, setBuilderMode] = useState<"simple" | "advanced">("simple");
 
@@ -145,17 +144,17 @@ export default function SavedFilterManager({
         };
 
         if (editingFilter) {
-            onUpdateFilter(finalFilter);
+            handleUpdateFilter(finalFilter);
             setEditingFilter(undefined);
         } else {
-            onAddFilter(finalFilter);
+            handleAddFilter(finalFilter);
         }
         // Reset state
         resetState();
     };
 
     const handleSaveSimple = (filter: SavedFilter) => {
-        onAddFilter(filter);
+        handleAddFilter(filter);
         resetState();
     };
 
@@ -179,8 +178,8 @@ export default function SavedFilterManager({
         <div className="mb-4 bg-osrs-panel border-2 border-osrs-border rounded-lg overflow-hidden shadow-lg">
             {/* Header */}
             <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full px-4 py-3 bg-osrs-button text-[#2c1e12] font-header font-bold flex items-center justify-between hover:bg-osrs-button-hover transition-colors"
+                onClick={() => togglePanel('filters')}
+                className="w-full px-4 py-3 bg-osrs-button text-osrs-text-dark font-header font-bold flex items-center justify-between hover:bg-osrs-button-hover transition-colors"
             >
                 <span>Filters</span>
                 {isExpanded ? (
@@ -298,7 +297,7 @@ export default function SavedFilterManager({
                                                     <input
                                                         type="checkbox"
                                                         checked={filter.enabled}
-                                                        onChange={() => onToggleFilter(filter.id)}
+                                                        onChange={() => handleToggleFilter(filter.id)}
                                                         className="w-4 h-4 cursor-pointer accent-osrs-accent"
                                                     />
                                                     <span title={filter.description}>{filter.name}</span>
@@ -313,7 +312,7 @@ export default function SavedFilterManager({
                                                         <Edit2 className="w-3 h-3" />
                                                     </button>
                                                     <button
-                                                        onClick={() => onDeleteFilter(filter.id)}
+                                                        onClick={() => handleDeleteFilter(filter.id)}
                                                         className="p-1 text-gray-500 hover:text-red-600"
                                                         title="Delete"
                                                     >

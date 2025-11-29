@@ -1,6 +1,7 @@
 {
-  "name": "next_app_temp",
-  "version": "0.1.0",
+  "name": "geflip",
+  "version": "1.0.0",
+  "description": "GE Flip - Flipping Finder & Alchemy Calculator",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -18,7 +19,8 @@
     "next": "16.0.3",
     "react": "19.2.0",
     "react-chartjs-2": "^5.3.1",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.17",

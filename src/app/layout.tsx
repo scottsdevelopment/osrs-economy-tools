@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
-import { ItemDataProvider } from "@/context/ItemDataContext";
-import { FilterProvider } from "@/context/FilterContext";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -62,14 +60,10 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <ItemDataProvider>
-          <FilterProvider>
-            <Navbar />
-            <main className="p-8">
-              {children}
-            </main>
-          </FilterProvider>
-        </ItemDataProvider>
+        <Navbar />
+        <main className="p-8">
+          {children}
+        </main>
         <footer>
           <p>
             Data provided by{" "}

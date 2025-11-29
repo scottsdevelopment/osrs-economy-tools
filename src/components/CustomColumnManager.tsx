@@ -4,23 +4,19 @@ import React, { useState } from "react";
 import { ChevronDown, ChevronUp, Plus, Edit2, Trash2 } from "lucide-react";
 import { CustomColumn } from "@/lib/columns/types";
 import ColumnBuilder from "./ColumnBuilder";
+import { useColumnsStore } from "@/stores/useColumnsStore";
+import { useUIStore } from "@/stores/useUIStore";
 
-interface CustomColumnManagerProps {
-    columns: CustomColumn[];
-    onUpdateColumn: (column: CustomColumn) => void;
-    onAddColumn: (column: CustomColumn) => void;
-    onDeleteColumn: (id: string) => Promise<void>;
-    onToggleColumn: (id: string) => void;
-}
+export default function CustomColumnManager() {
+    const columns = useColumnsStore(state => state.columns);
+    const handleAddColumn = useColumnsStore(state => state.handleAddColumn);
+    const handleUpdateColumn = useColumnsStore(state => state.handleUpdateColumn);
+    const handleDeleteColumn = useColumnsStore(state => state.handleDeleteColumn);
+    const handleToggleColumn = useColumnsStore(state => state.handleToggleColumn);
 
-export default function CustomColumnManager({
-    columns,
-    onUpdateColumn,
-    onAddColumn,
-    onDeleteColumn,
-    onToggleColumn,
-}: CustomColumnManagerProps) {
-    const [isExpanded, setIsExpanded] = useState(false);
+    const isExpanded = useUIStore(state => state.expandedPanels['columns'] || false);
+    const togglePanel = useUIStore(state => state.togglePanel);
+
     const [isBuilderOpen, setIsBuilderOpen] = useState(false);
     const [editingColumn, setEditingColumn] = useState<CustomColumn | undefined>(undefined);
 
@@ -45,7 +41,7 @@ export default function CustomColumnManager({
 
     const handleDelete = async (id: string) => {
         try {
-            await onDeleteColumn(id);
+            await handleDeleteColumn(id);
         } catch (error) {
             alert(error instanceof Error ? error.message : "Failed to delete column");
         }
@@ -53,17 +49,17 @@ export default function CustomColumnManager({
 
     const handleSave = (col: CustomColumn) => {
         if (editingColumn) {
-            onUpdateColumn(col);
+            handleUpdateColumn(col);
         } else {
-            onAddColumn(col);
+            handleAddColumn(col);
         }
     };
 
     return (
         <div className="mb-4 bg-osrs-panel border-2 border-osrs-border rounded-lg overflow-hidden shadow-lg">
             <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full px-4 py-3 bg-osrs-button text-[#2c1e12] font-header font-bold flex items-center justify-between hover:bg-osrs-button-hover transition-colors"
+                onClick={() => togglePanel('columns')}
+                className="w-full px-4 py-3 bg-osrs-button text-osrs-text-dark font-header font-bold flex items-center justify-between hover:bg-osrs-button-hover transition-colors"
             >
                 <span>Columns</span>
                 {isExpanded ? (
@@ -103,7 +99,7 @@ export default function CustomColumnManager({
                                             <input
                                                 type="checkbox"
                                                 checked={col.enabled}
-                                                onChange={() => onToggleColumn(col.id)}
+                                                onChange={() => handleToggleColumn(col.id)}
                                                 className="w-4 h-4 cursor-pointer accent-osrs-accent"
                                             />
                                             <span title={col.description}>{col.name}</span>

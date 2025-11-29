@@ -45,11 +45,11 @@ export default function Tooltip({ content, children }: TooltipProps) {
             </div>
             {mounted && isVisible && createPortal(
                 <div
-                    className="fixed z-[9999] px-3 py-2 text-sm text-[#f5e6d3] bg-[#2c1e12] rounded shadow-lg border border-[#5a3820] pointer-events-none transform -translate-x-1/2 -translate-y-full"
+                    className="fixed z-[9999] px-3 py-2 text-sm text-osrs-text-light bg-osrs-tooltip-bg rounded shadow-lg border border-osrs-primary pointer-events-none transform -translate-x-1/2 -translate-y-full"
                     style={{ left: coords.left, top: coords.top - 8 }}
                 >
                     {content}
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#2c1e12]"></div>
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-osrs-tooltip-bg"></div>
                 </div>,
                 document.body
             )}
