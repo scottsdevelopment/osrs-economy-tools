@@ -97,7 +97,7 @@ export default function AlchemyCalculator() {
 
     return (
         <div id="alchemy-tab" className="block">
-            <h2>Alchemy Trade Calculator</h2>
+            <h1>Alchemy Trade Calculator</h1>
             <div className="max-w-[900px] mx-auto my-8 p-4 bg-osrs-secondary-hover rounded-lg shadow-[0_0_8px_rgba(0,0,0,0.3)]">
                 <div className="flex flex-col gap-4 mb-8 p-4 bg-osrs-panel rounded">
                     <h3 className="text-osrs-accent mb-4">Trade Details</h3>

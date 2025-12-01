@@ -13,19 +13,6 @@ interface ColumnBuilderProps {
     initialColumn?: CustomColumn;
 }
 
-const AVAILABLE_FIELDS = [
-    { value: "item.name", label: "Name" },
-    { value: "item.low", label: "Buy Price" },
-    { value: "item.high", label: "Sell Price" },
-    { value: "item.profit", label: "Profit" },
-    { value: "item.roi", label: "ROI %" },
-    { value: "item.volume", label: "Volume (24h)" },
-    { value: "item.limit", label: "Limit" },
-    { value: "item.avg5m", label: "5m Avg" },
-    { value: "item.avg1h", label: "1h Avg" },
-    { value: "item.members", label: "Members" },
-];
-
 export default function ColumnBuilder({ isOpen, onClose, onSave, initialColumn }: ColumnBuilderProps) {
     const [name, setName] = useState("");
     const [expression, setExpression] = useState("");
@@ -114,43 +101,13 @@ export default function ColumnBuilder({ isOpen, onClose, onSave, initialColumn }
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold mb-1 text-osrs-text">
-                            Expression
-                            <span className="ml-2 text-xs font-normal text-gray-500">(Use 'item' variable)</span>
-                        </label>
+                        <label className="block text-sm font-bold mb-1 text-osrs-text">Expression</label>
                         <textarea
                             value={expression}
                             onChange={(e) => setExpression(e.target.value)}
                             className="w-full p-2 border border-osrs-border rounded bg-osrs-input focus:outline-none focus:border-osrs-accent font-mono text-sm h-24"
                             placeholder="e.g., item.roi > 10 ? 'Yes' : 'No'"
                         />
-                        <p className="text-xs text-gray-500 mt-1">
-                            Available: item.low, item.high, item.profit, item.roi, item.volume, sma(data, period)
-                        </p>
-                        <div className="mt-2">
-                            <p className="text-xs font-bold text-osrs-text mb-1">Insert Field:</p>
-                            <div className="flex flex-wrap gap-2 mt-2">
-                                {AVAILABLE_FIELDS.map(field => (
-                                    <button
-                                        key={field.value}
-                                        onClick={() => setExpression(prev => prev + field.value)}
-                                        className="px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded text-gray-700"
-                                    >
-                                        {field.label}
-                                    </button>
-                                ))}
-                                {otherColumns.map(col => (
-                                    <button
-                                        key={col.id}
-                                        onClick={() => setExpression(prev => prev + `columns.${col.id}`)}
-                                        className="px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 rounded text-blue-700 border border-blue-200"
-                                        title={col.description}
-                                    >
-                                        {col.name}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -177,7 +134,7 @@ export default function ColumnBuilder({ isOpen, onClose, onSave, initialColumn }
                                 >
                                     <option value="currency">Currency (GP)</option>
                                     <option value="percentage">Percentage (%)</option>
-                                    <option value="decimal">Decimal</option>
+                                    <option value="decimal">Number</option>
                                 </select>
                             </div>
                         )}

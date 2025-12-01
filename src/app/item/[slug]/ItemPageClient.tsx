@@ -2,6 +2,7 @@
 
 import { fetchItemDataBySlug } from "@/lib/api";
 import ItemDetails from "@/components/ItemDetails";
+import ItemDetailsSkeleton from "@/components/ItemDetailsSkeleton";
 import { useEffect, useState } from "react";
 import { ItemMapping, PriceData } from "@/lib/types";
 import { useItemsStore } from "@/stores/useItemsStore";
@@ -45,7 +46,7 @@ export default function ItemPageClient({ slug }: ItemPageClientProps) {
                 const volume = processedItem ? processedItem.volume : 0;
 
                 setData({ mapping, price, volume });
-                document.title = `${mapping.name} - GE Flip`;
+
                 setLoading(false);
             } else {
                 setData(null);
@@ -71,7 +72,7 @@ export default function ItemPageClient({ slug }: ItemPageClientProps) {
                 setLoading(false);
 
                 if (itemData) {
-                    document.title = `${itemData.mapping.name} - GE Flip`;
+
                 }
             }
         }
@@ -83,7 +84,7 @@ export default function ItemPageClient({ slug }: ItemPageClientProps) {
     }, [slug, mappings, items, storeLoading]);
 
     if (loading) {
-        return <div className="p-8 text-center">Loading...</div>;
+        return <ItemDetailsSkeleton />;
     }
 
     if (!data) {

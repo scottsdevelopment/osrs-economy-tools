@@ -69,12 +69,12 @@ export default function ItemSearch({ items, placeholder = "Search for an item...
                             }}
                             className="w-full flex items-center gap-3 px-3 py-2 hover:bg-osrs-accent/30 transition-colors text-left border-b border-osrs-border/30 last:border-b-0"
                         >
-                            <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                            <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
                                 <Image
                                     src={getItemImageUrl(item.name)}
                                     alt={item.name}
-                                    width={32}
-                                    height={32}
+                                    width={24}
+                                    height={24}
                                     className="object-contain"
                                     onError={(e) => {
                                         e.currentTarget.style.display = "none";

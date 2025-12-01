@@ -25,7 +25,7 @@ export const PRESET_COLUMNS: CustomColumn[] = [
         name: "Buy Limit",
         expression: "item.limit",
         type: "number",
-        format: "currency",
+        format: "decimal",
         enabled: true,
         group: "Core",
         description: "Grand Exchange buy limit every 4 hours"
@@ -44,7 +44,7 @@ export const PRESET_COLUMNS: CustomColumn[] = [
         name: "Sell Price",
         expression: "item.low",
         type: "number",
-        format: "currency",
+        format: "decimal",
         enabled: true,
         group: "Core",
         description: "Current lowest price someone is selling for (instant buy)"
@@ -64,7 +64,7 @@ export const PRESET_COLUMNS: CustomColumn[] = [
         name: "Buy Price",
         expression: "item.high",
         type: "number",
-        format: "currency",
+        format: "decimal",
         enabled: true,
         group: "Core",
         description: "Current highest price someone is buying for (instant sell)"
@@ -104,7 +104,7 @@ export const PRESET_COLUMNS: CustomColumn[] = [
         name: "Daily Volume",
         expression: "item.volume",
         type: "number",
-        format: "currency",
+        format: "decimal",
         enabled: true,
         group: "Volume",
         description: "Total number of items traded in the last 24 hours"
@@ -166,7 +166,7 @@ export const PRESET_COLUMNS: CustomColumn[] = [
         name: "5m Vol",
         expression: "item.highVol5m + item.lowVol5m",
         type: "number",
-        format: "currency",
+        format: "decimal",
         enabled: false,
         group: "Volume",
         description: "Total volume traded in the last 5 minutes"
@@ -176,7 +176,7 @@ export const PRESET_COLUMNS: CustomColumn[] = [
         name: "1h Vol",
         expression: "item.highVol1h + item.lowVol1h",
         type: "number",
-        format: "currency",
+        format: "decimal",
         enabled: false,
         group: "Volume",
         description: "Total volume traded in the last hour"
@@ -186,7 +186,7 @@ export const PRESET_COLUMNS: CustomColumn[] = [
         name: "6h Vol",
         expression: "item.highVol6h + item.lowVol6h",
         type: "number",
-        format: "currency",
+        format: "decimal",
         enabled: false,
         group: "Volume",
         description: "Total volume traded in the last 6 hours"
@@ -196,7 +196,7 @@ export const PRESET_COLUMNS: CustomColumn[] = [
         name: "24h Vol",
         expression: "item.highVol24h + item.lowVol24h",
         type: "number",
-        format: "currency",
+        format: "decimal",
         enabled: false,
         group: "Volume",
         description: "Total volume traded in the last 24 hours (calculated from high/low)"
@@ -206,7 +206,7 @@ export const PRESET_COLUMNS: CustomColumn[] = [
         name: "5m Avg",
         expression: "item.avg5m",
         type: "number",
-        format: "currency",
+        format: "decimal",
         enabled: false,
         group: "Averages",
         description: "Average price over the last 5 minutes"
@@ -216,7 +216,7 @@ export const PRESET_COLUMNS: CustomColumn[] = [
         name: "1h Avg",
         expression: "item.avg1h",
         type: "number",
-        format: "currency",
+        format: "decimal",
         enabled: false,
         group: "Averages",
         description: "Average price over the last hour"
@@ -226,7 +226,7 @@ export const PRESET_COLUMNS: CustomColumn[] = [
         name: "6h Avg",
         expression: "item.avg6h",
         type: "number",
-        format: "currency",
+        format: "decimal",
         enabled: false,
         group: "Averages",
         description: "Average price over the last 6 hours"
@@ -236,7 +236,7 @@ export const PRESET_COLUMNS: CustomColumn[] = [
         name: "24h Avg",
         expression: "item.avg24h",
         type: "number",
-        format: "currency",
+        format: "decimal",
         enabled: false,
         group: "Averages",
         description: "Average price over the last 24 hours"
@@ -246,7 +246,7 @@ export const PRESET_COLUMNS: CustomColumn[] = [
         name: "High Alch",
         expression: "item.highalch",
         type: "number",
-        format: "currency",
+        format: "decimal",
         enabled: false,
         group: "Alchemy",
         description: "High alchemy value of the item"

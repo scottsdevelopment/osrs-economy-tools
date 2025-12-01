@@ -86,9 +86,16 @@ export default function SavedFilterManager({
                 setBuilderMode("simple");
             } else {
                 // If complex (all failed), force advanced mode and reset simple conditions
-                setSimpleConditions([{ field: "", operator: ">", value: "", valueType: "number" }]);
-                setBuilderMode("advanced");
-                setTranslationWarning(null);
+                // But only if we actually have code to parse!
+                if (code.trim()) {
+                    setSimpleConditions([{ field: "", operator: ">", value: "", valueType: "number" }]);
+                    setBuilderMode("advanced");
+                    setTranslationWarning(null);
+                } else {
+                    // Empty code = empty simple mode
+                    setSimpleConditions([{ field: "", operator: ">", value: "", valueType: "number" }]);
+                    setBuilderMode("simple");
+                }
             }
         } else {
             // No expressions, default to simple
@@ -125,9 +132,14 @@ export default function SavedFilterManager({
                         setTranslationWarning(null);
                     }
                 } else {
-                    // If parsing fails completely
-                    setSimpleConditions([{ field: "", operator: ">", value: "", valueType: "number" }]);
-                    setTranslationWarning("Could not translate advanced filter to simple mode.");
+                    // If parsing fails completely, check if it was just empty
+                    if (!advancedCode.trim()) {
+                        setSimpleConditions([{ field: "", operator: ">", value: "", valueType: "number" }]);
+                        setTranslationWarning(null);
+                    } else {
+                        setSimpleConditions([{ field: "", operator: ">", value: "", valueType: "number" }]);
+                        setTranslationWarning("Could not translate advanced filter to simple mode.");
+                    }
                 }
             }
             setBuilderMode("simple");

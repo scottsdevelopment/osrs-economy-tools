@@ -27,7 +27,7 @@ export function ItemDataProvider({ children }: { children: ReactNode }) {
         setLoading(true);
         try {
             const data = await fetchFlippingData();
-            setItems(data);
+            setItems(data.items);
             setLastUpdated(new Date());
             setTimeLeft(60); // Reset timer
         } catch (error) {

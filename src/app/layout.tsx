@@ -9,38 +9,45 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "💰 GE Flip - Flipping Finder & Alchemy Calculator",
+  metadataBase: new URL("https://geflip.com"),
+  title: {
+    default: "GEFlip.com - #1 OSRS Grand Exchange Flipping & Price Checker 2025",
+    template: "%s | GEFlip.com",
+  },
   description:
-    "Free OSRS economy tools including a flipping finder with real-time Grand Exchange prices and an alchemy trade calculator. Find profitable items to flip and calculate high alchemy profits in Old School RuneScape.",
+    "Real-time OSRS GE prices, flipping margins, item database & profit calculator. Find the best Old School RuneScape flips with high volume and ROI.",
   keywords:
     "OSRS, Old School RuneScape, GE flipping, Grand Exchange, high alchemy calculator, OSRS profit calculator, RuneScape tools, OSRS flipper, GE prices, OSRS economy, flipping guide, alchemy profit calculator",
   authors: [{ name: "GE Flip" }],
   openGraph: {
     type: "website",
-    url: "https://scottsdevelopment.github.io/osrs-economy-tools/",
-    title: "💰 GE Flip - Flipping Finder & Alchemy Calculator",
+    url: "https://geflip.com",
+    title: "GEFlip.com - #1 OSRS Grand Exchange Flipping & Price Checker 2025",
     description:
-      "Free OSRS economy tools including a flipping finder with real-time Grand Exchange prices and an alchemy trade calculator. Find profitable items to flip and calculate high alchemy profits.",
+      "Real-time OSRS GE prices, flipping margins, item database & profit calculator. Find the best Old School RuneScape flips with high volume and ROI.",
     siteName: "GE Flip",
     locale: "en_US",
     images: [
       {
-        url: "https://scottsdevelopment.github.io/osrs-economy-tools/banner.png",
+        url: "/banner.png", // Assuming banner.png is in public folder, or keep the old one if it exists
+        width: 1200,
+        height: 630,
+        alt: "GE Flip OSRS Tools",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    site: "@scottsdevelopment", // Assuming handle or generic
-    title: "💰 GE Flip - Flipping Finder & Alchemy Calculator",
+    site: "@geflip", // Placeholder or keep generic if unknown
+    title: "GEFlip.com - #1 OSRS Grand Exchange Flipping & Price Checker 2025",
     description:
-      "Free OSRS economy tools including a flipping finder with real-time Grand Exchange prices and an alchemy trade calculator. Find profitable items to flip and calculate high alchemy profits.",
-    images: ["https://scottsdevelopment.github.io/osrs-economy-tools/banner.png"],
+      "Real-time OSRS GE prices, flipping margins, item database & profit calculator. Find the best Old School RuneScape flips with high volume and ROI.",
+    images: ["/banner.png"],
   },
   icons: {
-    icon: "/favico.ico",
-    shortcut: "/favico.ico",
-    apple: "/favico.ico",
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico", // Assuming favicon.ico exists as seen in file list (typo in original was favico.ico but file list said favicon.ico)
   },
 };
 
@@ -64,13 +71,15 @@ export default function RootLayout({
         <main className="p-8">
           {children}
         </main>
-        <footer>
+        <footer className="text-center p-4 text-osrs-text-muted text-sm">
+          <h1 className="text-sm font-bold mb-2">OSRS Flipping Tool & Price Checker</h1>
           <p>
             Data provided by{" "}
             <a
               href="https://oldschool.runescape.wiki/w/RuneScape:Real-time_Prices"
               target="_blank"
               rel="noopener noreferrer"
+              className="text-osrs-accent hover:underline"
             >
               RuneScape Wiki
             </a>

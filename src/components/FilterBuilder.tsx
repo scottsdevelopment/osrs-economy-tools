@@ -206,7 +206,7 @@ export default function FilterBuilder({
                         value={filterName}
                         onChange={(e) => setFilterName(e.target.value)}
                         className="w-full h-[42px] p-2 border border-osrs-border rounded bg-osrs-input text-sm focus:outline-none focus:border-osrs-accent"
-                        placeholder="e.g., High Profit Decants"
+                        placeholder="e.g., High Volume and Margin"
                     />
                 </div>
                 <div>
@@ -252,10 +252,6 @@ export default function FilterBuilder({
             <div className="border-t border-osrs-border pt-4">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="font-bold text-osrs-text text-sm">Expressions</h3>
-                    <div className="text-xs text-gray-500 flex items-center gap-1">
-                        <HelpCircle className="w-3 h-3" />
-                        <span>Available: <code>item.*</code>, <code>columns.*</code>, <code>getItem(id)</code>. Use <code>and</code>/<code>or</code>/<code>not</code> for logic.</span>
-                    </div>
                 </div>
 
                 <div className="space-y-4">
@@ -291,7 +287,7 @@ export default function FilterBuilder({
                                             value={expr.action || ""}
                                             onChange={(e) => updateExpression(index, "action", e.target.value)}
                                             className="w-full p-2 border border-osrs-border rounded bg-osrs-input text-sm"
-                                            placeholder="e.g. Decant, Buy"
+                                            placeholder="e.g. Flip"
                                         />
                                     </div>
                                     <div>

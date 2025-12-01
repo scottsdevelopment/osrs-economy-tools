@@ -2,6 +2,7 @@
 
 import React from "react";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import SkeletonLoader from "./SkeletonLoader";
 
 interface PaginationProps {
     currentPage: number;
@@ -10,6 +11,7 @@ interface PaginationProps {
     itemsPerPage: number;
     onPageChange: (page: number) => void;
     onItemsPerPageChange: (itemsPerPage: number) => void;
+    loading?: boolean;
 }
 
 export default function Pagination({
@@ -19,6 +21,7 @@ export default function Pagination({
     itemsPerPage,
     onPageChange,
     onItemsPerPageChange,
+    loading = false,
 }: PaginationProps) {
     const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
     const endItem = Math.min(currentPage * itemsPerPage, totalItems);
@@ -36,9 +39,15 @@ export default function Pagination({
     return (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-osrs-panel border-2 border-osrs-border rounded-t-lg">
             {/* Items count */}
-            <div className="text-sm text-osrs-text font-body">
-                Showing <span className="font-bold">{startItem}-{endItem}</span> of{" "}
-                <span className="font-bold">{totalItems}</span> items
+            <div className="text-sm text-osrs-text font-body w-[250px]">
+                {loading ? (
+                    <SkeletonLoader width={250} height={20} />
+                ) : (
+                    <>
+                        Showing <span className="font-bold">{startItem}-{endItem}</span> of{" "}
+                        <span className="font-bold">{totalItems}</span> items
+                    </>
+                )}
             </div>
 
             {/* Page navigation */}
@@ -61,9 +70,15 @@ export default function Pagination({
                     <ChevronLeft className="w-4 h-4" />
                 </button>
 
-                <span className="text-sm text-osrs-text font-body px-2">
-                    Page <span className="font-bold">{currentPage}</span> of{" "}
-                    <span className="font-bold">{totalPages}</span>
+                <span className="text-sm text-osrs-text font-body px-2 w-[120px] inline-block text-center">
+                    {loading ? (
+                        <SkeletonLoader width={100} height={20} />
+                    ) : (
+                        <>
+                            Page <span className="font-bold">{currentPage}</span> of{" "}
+                            <span className="font-bold">{totalPages}</span>
+                        </>
+                    )}
                 </span>
 
                 <button

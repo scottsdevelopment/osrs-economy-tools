@@ -28,13 +28,9 @@ export default function FlippingFinder() {
             <SavedFilterManager
                 onPreviewFilter={handlePreviewFilter}
             />
-            {loading && items.length === 0 ? (
-                <div className="text-center p-4 text-osrs-text">Loading data...</div>
-            ) : (
-                <FlippingTable
-                    filters={effectiveFilters}
-                />
-            )}
+            <FlippingTable
+                filters={effectiveFilters}
+            />
         </div>
     );
 }

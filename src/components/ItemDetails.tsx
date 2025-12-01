@@ -73,7 +73,7 @@ export default function ItemDetails({ item, price, volume }: ItemDetailsProps) {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row justify-between items-end mb-4 gap-4">
                 <div className="flex items-center gap-4">
-                    <h3 className="m-0 text-osrs-text-dark text-3xl font-header font-bold flex items-center gap-3">
+                    <h1 className="m-0 text-osrs-text-dark text-3xl font-header font-bold flex items-center gap-3">
                         <img
                             src={getItemImageUrl(item.name)}
                             alt={item.name}
@@ -84,7 +84,7 @@ export default function ItemDetails({ item, price, volume }: ItemDetailsProps) {
                         />
                         {item.name}
                         <span className="text-osrs-text-muted text-sm font-normal">(Item ID: {item.id})</span>
-                    </h3>
+                    </h1>
                 </div>
 
                 <div className="flex gap-2">

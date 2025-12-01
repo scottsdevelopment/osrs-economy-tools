@@ -47,23 +47,6 @@ body {
   line-height: 1.6;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-header);
-  color: #5a3820;
-  margin-bottom: 0.5em;
-  font-weight: 700;
-}
-
-h1 {
-  font-size: 2.5rem;
-  text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.2);
-}
-
 @layer components {
   .btn-primary {
     @apply bg-osrs-primary text-osrs-text-light px-5 py-2.5 border border-osrs-border-dark rounded font-header font-bold cursor-pointer transition-all shadow-sm hover:bg-osrs-primary-hover hover:-translate-y-px hover:shadow-md active:translate-y-0 active:shadow-sm;

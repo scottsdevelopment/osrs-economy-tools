@@ -54,7 +54,8 @@ const TableRow = memo(({ item, columns, cache, action, showActionColumn }: Table
     const enabledColumns = React.useMemo(() => columns.filter(c => c.enabled), [columns]);
     const [loadingColumns, setLoadingColumns] = useState<Set<string>>(new Set());
     const [updateTrigger, setUpdateTrigger] = useState(0);
-    const isFavorite = useFavoritesStore(state => state.isFavorite);
+    // Subscribe to this specific item's favorite status
+    const isFavoriteItem = useFavoritesStore(state => state.isFavorite(item.id));
     const toggleFavorite = useFavoritesStore(state => state.toggleFavorite);
 
     // Subscribe to this item's timeseries updates
@@ -133,29 +134,32 @@ const TableRow = memo(({ item, columns, cache, action, showActionColumn }: Table
                     return (
                         <React.Fragment key={col.id}>
                             <td className="p-3 border-b border-osrs-border-light w-10">
-                                <Link
-                                    href={`/item/${generateSlug(item.name)}`}
-                                    target="_blank"
-                                    className="w-6 h-6 flex items-center justify-center text-inherit no-underline"
-                                >
-                                    <ItemImage name={item.name} />
-                                </Link>
+                                <div className="flex items-center justify-start">
+                                    <Link
+                                        href={`/item/${generateSlug(item.name)}`}
+                                        target="_blank"
+                                        className="w-6 h-6 flex items-center justify-center text-inherit no-underline"
+                                    >
+                                        <ItemImage name={item.name} />
+                                    </Link>
+                                </div>
                             </td>
                             <td className="p-3 border-b border-osrs-border-light">
-                                <Link
-                                    href={`/item/${generateSlug(item.name)}`}
-                                    target="_blank"
-                                    className="text-inherit no-underline hover:underline font-medium"
-                                >
-                                    {formatted}
-                                </Link>
+                                <div className="flex items-center justify-center">
+                                    <Link
+                                        href={`/item/${generateSlug(item.name)}`}
+                                        target="_blank"
+                                        className="text-inherit no-underline hover:underline font-medium"
+                                    >
+                                        {formatted}
+                                    </Link>
+                                </div>
                             </td>
                         </React.Fragment>
                     );
                 }
 
                 if (col.id === "favorite") {
-                    const favorite = isFavorite(item.id);
                     return (
                         <td key={col.id} className="p-3 border-b border-osrs-border-light">
                             <button
@@ -167,14 +171,14 @@ const TableRow = memo(({ item, columns, cache, action, showActionColumn }: Table
                                 className="focus:outline-none hover:scale-110 transition-transform"
                             >
                                 <Heart
-                                    className={`w-4 h-4 ${favorite ? "fill-osrs-primary text-osrs-primary" : "text-osrs-text opacity-40 hover:opacity-100"}`}
+                                    className={`w-4 h-4 ${isFavoriteItem ? "fill-osrs-primary text-osrs-primary" : "text-osrs-text opacity-40 hover:opacity-100"}`}
                                 />
                             </button>
                         </td>
                     );
                 }
 
-                if (col.id === "profit" || col.id === "alchMargin") {
+                if (col.format === "currency") {
                     const numVal = Number(value);
                     const colorClass = numVal >= 0 ? "text-osrs-profit font-bold" : "text-osrs-loss font-bold";
                     return (

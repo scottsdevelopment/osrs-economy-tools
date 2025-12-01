@@ -73,12 +73,12 @@ export function evaluateFilter(
     };
 
     // Handle legacy filters or missing expressions
-    const expressions = filter.expressions || [];
+    const rawExpressions = filter.expressions || [];
+    // Filter out empty expressions
+    const expressions = rawExpressions.filter(e => e.code && e.code.trim() !== "");
 
-    // If no expressions, what should we do? 
-    // If it's an enabled filter with no expressions, it probably shouldn't match anything, or match everything?
-    // Let's assume no match if no expressions are defined.
-    if (expressions.length === 0) return { match: false };
+    // If no expressions (or only empty ones), match everything
+    if (expressions.length === 0) return { match: true };
 
     // Iterate through expressions (OR logic within a single filter)
     for (const expr of expressions) {

@@ -262,7 +262,7 @@ export default function SimpleFilterBuilder({
                         placeholder={
                             conditions.length > 0 && conditions.every(c => c.field)
                                 ? generateFilterName(conditions, logic)
-                                : "e.g., High Profit Decants"
+                                : "e.g., High Volume and Margin"
                         }
                     />
                 </div>
@@ -303,115 +303,118 @@ export default function SimpleFilterBuilder({
                 <div className="flex justify-between items-center mb-2">
                     <h3 className="font-bold text-osrs-text text-sm">Expressions</h3>
                 </div>
-                {conditions.map((condition, index) => {
-                    const field = FILTER_FIELDS.find((f) => f.id === condition.field);
-                    const operators = getOperatorsForType(condition.valueType);
+                <div className="space-y-4">
+                    {conditions.map((condition, index) => {
+                        const field = FILTER_FIELDS.find((f) => f.id === condition.field);
+                        const operators = getOperatorsForType(condition.valueType);
 
-                    return (
-                        <div key={index} className="p-3 border border-osrs-border rounded bg-white/50">
-                            <div className="flex items-start gap-2">
-                                {/* Field Selection */}
-                                <div className="flex-1">
-                                    <label className="block text-xs font-bold text-gray-600 mb-1">
-                                        Field
-                                    </label>
-                                    <select
-                                        value={condition.field}
-                                        onChange={(e) => handleFieldChange(index, e.target.value)}
-                                        className="w-full p-2 border border-osrs-border rounded bg-osrs-input text-sm focus:outline-none focus:border-osrs-accent"
-                                    >
-                                        <option value="">Select field...</option>
-                                        {Object.entries(groupedFields).map(([group, fields]) => (
-                                            <optgroup key={group} label={group}>
-                                                {fields.map((f) => (
-                                                    <option key={f.id} value={f.id}>
-                                                        {f.name}
-                                                    </option>
-                                                ))}
-                                            </optgroup>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Operator Selection */}
-                                <div className="w-20">
-                                    <label className="block text-xs font-bold text-gray-600 mb-1">
-                                        Op
-                                    </label>
-                                    <select
-                                        value={condition.operator}
-                                        onChange={(e) => handleOperatorChange(index, e.target.value)}
-                                        className="w-full p-2 border border-osrs-border rounded bg-osrs-input text-sm focus:outline-none focus:border-osrs-accent"
-                                        disabled={!condition.field}
-                                    >
-                                        {operators.map((op) => (
-                                            <option key={op.value} value={op.value}>
-                                                {op.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Value Input */}
-                                <div className="flex-1">
-                                    <label className="block text-xs font-bold text-gray-600 mb-1">
-                                        Value
-                                    </label>
-                                    {condition.valueType === "boolean" ? (
+                        return (
+                            <div key={index} className="p-3 border border-osrs-border rounded bg-white/50">
+                                <div className="flex items-start gap-2">
+                                    {/* Field Selection */}
+                                    <div className="flex-1">
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">
+                                            Field
+                                        </label>
                                         <select
-                                            value={condition.value.toString()}
-                                            onChange={(e) =>
-                                                handleBooleanChange(index, e.target.value === "true")
-                                            }
-                                            className="w-full p-2 border border-osrs-border rounded bg-osrs-input text-sm focus:outline-none focus:border-osrs-accent"
+                                            value={condition.field}
+                                            onChange={(e) => handleFieldChange(index, e.target.value)}
+                                            className="w-full h-[42px] p-2 border border-osrs-border rounded bg-osrs-input text-sm focus:outline-none focus:border-osrs-accent"
+                                        >
+                                            <option value="">Select field...</option>
+                                            {Object.entries(groupedFields).map(([group, fields]) => (
+                                                <optgroup key={group} label={group}>
+                                                    {fields.map((f) => (
+                                                        <option key={f.id} value={f.id}>
+                                                            {f.name}
+                                                        </option>
+                                                    ))}
+                                                </optgroup>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Operator Selection */}
+                                    <div className="w-20">
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">
+                                            Op
+                                        </label>
+                                        <select
+                                            value={condition.operator}
+                                            onChange={(e) => handleOperatorChange(index, e.target.value)}
+                                            className="w-full h-[42px] p-2 border border-osrs-border rounded bg-osrs-input text-sm focus:outline-none focus:border-osrs-accent"
                                             disabled={!condition.field}
                                         >
-                                            <option value="true">True</option>
-                                            <option value="false">False</option>
+                                            {operators.map((op) => (
+                                                <option key={op.value} value={op.value}>
+                                                    {op.label}
+                                                </option>
+                                            ))}
                                         </select>
-                                    ) : (
-                                        <input
-                                            type="text"
-                                            value={condition.value.toString()}
-                                            onChange={(e) => handleValueChange(index, e.target.value)}
-                                            className="w-full p-2 border border-osrs-border rounded bg-osrs-input text-sm focus:outline-none focus:border-osrs-accent"
-                                            placeholder={
-                                                condition.valueType === "percentage"
-                                                    ? "5 (for 5%)"
-                                                    : condition.valueType === "currency"
-                                                        ? "100000 or 100k"
-                                                        : "Enter value"
-                                            }
-                                            disabled={!condition.field}
-                                        />
-                                    )}
+                                    </div>
+
+                                    {/* Value Input */}
+                                    <div className="flex-1">
+                                        <label className="block text-xs font-bold text-gray-600 mb-1">
+                                            Value
+                                        </label>
+                                        {condition.valueType === "boolean" ? (
+                                            <select
+                                                value={condition.value.toString()}
+                                                onChange={(e) =>
+                                                    handleBooleanChange(index, e.target.value === "true")
+                                                }
+                                                className="w-full h-[42px] p-2 border border-osrs-border rounded bg-osrs-input text-sm focus:outline-none focus:border-osrs-accent"
+                                                disabled={!condition.field}
+                                            >
+                                                <option value="true">True</option>
+                                                <option value="false">False</option>
+                                            </select>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={condition.value.toString()}
+                                                onChange={(e) => handleValueChange(index, e.target.value)}
+                                                className="w-full h-[42px] p-2 border border-osrs-border rounded bg-osrs-input text-sm focus:outline-none focus:border-osrs-accent"
+                                                placeholder={
+                                                    condition.valueType === "percentage"
+                                                        ? "5 (for 5%)"
+                                                        : condition.valueType === "currency"
+                                                            ? "100000 or 100k"
+                                                            : "Enter value"
+                                                }
+                                                disabled={!condition.field}
+                                            />
+                                        )}
+                                    </div>
+
+                                    {/* Remove Button */}
+                                    <div className="pt-5">
+                                        <button
+                                            onClick={() => handleRemoveCondition(index)}
+                                            className="p-2 text-red-600 hover:bg-red-100 rounded transition-colors"
+                                            disabled={conditions.length === 1}
+                                            title="Remove condition"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
 
-                                {/* Remove Button */}
-                                <div className="pt-5">
-                                    <button
-                                        onClick={() => handleRemoveCondition(index)}
-                                        className="p-2 text-red-600 hover:bg-red-100 rounded transition-colors"
-                                        disabled={conditions.length === 1}
-                                        title="Remove condition"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </div>
+                                {field && (
+                                    <div className="mt-1 text-xs text-gray-500 italic">
+                                        {field.description}
+                                    </div>
+                                )}
                             </div>
+                        );
+                    })}
+                </div>
 
-                            {field && (
-                                <div className="mt-1 text-xs text-gray-500 italic">
-                                    {field.description}
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
 
                 {/* Logic Toggle (AND/OR) */}
                 {conditions.length > 1 && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 mt-2">
                         <span className="text-xs text-gray-600">Combine with:</span>
                         <div className="flex gap-1">
                             <button

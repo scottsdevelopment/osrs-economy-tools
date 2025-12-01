@@ -18,6 +18,8 @@ import { useColumnsStore } from "@/stores/useColumnsStore";
 import { useFavoritesStore } from "@/stores/useFavoritesStore";
 import { useUIStore } from "@/stores/useUIStore";
 
+import { SkeletonTableHeader, SkeletonTableBody } from "./SkeletonTable";
+
 interface FlippingTableProps {
     filters?: SavedFilter[]; // Add filters as a prop
 }
@@ -25,7 +27,9 @@ interface FlippingTableProps {
 export default function FlippingTable({ filters: externalFilters }: FlippingTableProps) {
     // Zustand stores
     const items = useItemsStore(state => state.items);
+    const loading = useItemsStore(state => state.loading);
     const columns = useColumnsStore(state => state.columns);
+    const handleColumnReorder = useColumnsStore(state => state.handleColumnReorder);
     const savedFilters = useFiltersStore(state => state.savedFilters);
     const isFavorite = useFavoritesStore(state => state.isFavorite);
 
@@ -206,6 +210,8 @@ export default function FlippingTable({ filters: externalFilters }: FlippingTabl
         );
     };
 
+
+
     const enabledColumns = columns.filter(c => c.enabled);
     // Check if any visible item has an action
     const showActionColumn = processedItems.some((i: any) => i._action);
@@ -237,48 +243,69 @@ export default function FlippingTable({ filters: externalFilters }: FlippingTabl
                         itemsPerPage={itemsPerPage}
                         onPageChange={handlePageChange}
                         onItemsPerPageChange={handleItemsPerPageChange}
+                        loading={loading && items.length === 0}
                     />
                 </div>
 
                 <div className="overflow-auto relative max-h-[75vh] scrollbar-thin scrollbar-thumb-osrs-accent scrollbar-track-osrs-panel">
                     <table className="w-full border-separate border-spacing-0 bg-osrs-panel shadow-lg overflow-hidden border border-osrs-border">
                         <thead>
-                            <tr>
-                                {showActionColumn && (
-                                    <th
-                                        onClick={() => handleSort("_action")}
-                                        className="sticky top-0 z-20 p-3 text-left bg-osrs-button text-osrs-text-dark font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative whitespace-nowrap shadow-sm"
-                                    >
-                                        Action <SortIcon columnId="_action" />
-                                    </th>
-                                )}
+                            {loading && items.length === 0 ? (
+                                <SkeletonTableHeader />
+                            ) : (
+                                <tr>
+                                    {showActionColumn && (
+                                        <th
+                                            onClick={() => handleSort("_action")}
+                                            className="sticky top-0 z-20 p-3 text-left bg-osrs-button text-osrs-text-dark font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative whitespace-nowrap shadow-sm"
+                                        >
+                                            Action <SortIcon columnId="_action" />
+                                        </th>
+                                    )}
 
-                                {enabledColumns.map((col) => (
-                                    <th
-                                        key={col.id}
-                                        onClick={() => handleSort(col.id)}
-                                        colSpan={col.id === "name" ? 2 : 1}
-                                        className={`sticky top-0 z-20 p-3 text-left bg-osrs-button text-osrs-text-dark font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative whitespace-nowrap shadow-sm ${sortKey === col.id ? "bg-osrs-button-hover" : ""
-                                            }`}
-                                    >
-                                        <Tooltip content={col.description || ""}>
-                                            <div className="flex items-center gap-1">
-                                                {col.id === "low" && (
-                                                    <img src={BUY_ICON} alt="Buy" className="w-3 h-3 object-contain" />
-                                                )}
-                                                {col.id === "high" && (
-                                                    <img src={SELL_ICON} alt="Sell" className="w-3 h-3 object-contain" />
-                                                )}
-                                                <span>{col.name}</span>
-                                                <SortIcon columnId={col.id} />
-                                            </div>
-                                        </Tooltip>
-                                    </th>
-                                ))}
-                            </tr>
+                                    {enabledColumns.map((col) => (
+                                        <th
+                                            key={col.id}
+                                            draggable
+                                            onDragStart={(e) => {
+                                                e.dataTransfer.setData("text/plain", col.id);
+                                                e.dataTransfer.effectAllowed = "move";
+                                            }}
+                                            onDragOver={(e) => {
+                                                e.preventDefault();
+                                                e.dataTransfer.dropEffect = "move";
+                                            }}
+                                            onDrop={(e) => {
+                                                e.preventDefault();
+                                                const draggedId = e.dataTransfer.getData("text/plain");
+                                                handleColumnReorder(draggedId, col.id);
+                                            }}
+                                            onClick={() => handleSort(col.id)}
+                                            colSpan={col.id === "name" ? 2 : 1}
+                                            className={`sticky top-0 z-20 p-3 bg-osrs-button text-osrs-text-dark font-header font-bold cursor-pointer border-b-2 border-osrs-border hover:bg-osrs-button-hover transition-colors relative whitespace-nowrap shadow-sm ${col.id === "name" ? "text-center" : "text-left"} ${sortKey === col.id ? "bg-osrs-button-hover" : ""
+                                                }`}
+                                        >
+                                            <Tooltip content={col.description || ""}>
+                                                <div className="flex items-center justify-center gap-1 w-full">
+                                                    {col.id === "low" && (
+                                                        <img src={BUY_ICON} alt="Buy" className="w-3 h-3 object-contain" />
+                                                    )}
+                                                    {col.id === "high" && (
+                                                        <img src={SELL_ICON} alt="Sell" className="w-3 h-3 object-contain" />
+                                                    )}
+                                                    <span>{col.name}</span>
+                                                    <SortIcon columnId={col.id} />
+                                                </div>
+                                            </Tooltip>
+                                        </th>
+                                    ))}
+                                </tr>
+                            )}
                         </thead>
                         <tbody>
-                            {paginatedItems.length === 0 ? (
+                            {loading && items.length === 0 ? (
+                                <SkeletonTableBody />
+                            ) : paginatedItems.length === 0 && !(loading && items.length === 0) ? (
                                 <tr>
                                     <td
                                         colSpan={enabledColumns.length + 1 + (showActionColumn ? 1 : 0)}

@@ -5,6 +5,7 @@ import { PRESET_COLUMNS } from '@/lib/columns/presets';
 
 interface ColumnsState {
     columns: CustomColumn[];
+    columnsLoaded: boolean;
     loadColumns: () => Promise<void>;
     handleAddColumn: (column: CustomColumn) => Promise<void>;
     handleUpdateColumn: (column: CustomColumn) => Promise<void>;
@@ -15,10 +16,11 @@ interface ColumnsState {
 
 export const useColumnsStore = create<ColumnsState>((set, get) => ({
     columns: PRESET_COLUMNS,
+    columnsLoaded: false,
 
     loadColumns: async () => {
         const columns = await loadColumns();
-        set({ columns });
+        set({ columns, columnsLoaded: true });
     },
 
     handleAddColumn: async (column: CustomColumn) => {

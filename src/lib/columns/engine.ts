@@ -121,7 +121,11 @@ export function formatColumnValue(value: any, column: CustomColumn): string {
             case "percentage":
                 return `${(100 * num).toFixed(2)}%`;
             case "decimal":
-                return num.toFixed(2);
+                // Smart decimal: if integer, show no decimals. If float, show 2.
+                return num.toLocaleString(undefined, {
+                    minimumFractionDigits: Number.isInteger(num) ? 0 : 2,
+                    maximumFractionDigits: 2
+                });
             case "relativeTime": {
                 const now = Math.floor(Date.now() / 1000);
                 const diff = now - num;
